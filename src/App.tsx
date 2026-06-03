@@ -2032,6 +2032,8 @@ function buildReportText(profile: import("./hooks/use-client-profile").ClientPro
 function PreSessionModal({ coachEmail, onClose }: { coachEmail: string; onClose: () => void }) {
   const { profile } = useClientProfile();
   const [copied, setCopied] = useState(false);
+  const [phase, setPhase] = useState<"summary" | "feedback">("summary");
+  const [feedback, setFeedback] = useState({ q1: "", q2: "", q3: "", q4: "" });
   if (!profile) return null;
 
   const clientName = profile.intake.name || "Client";
@@ -2067,7 +2069,82 @@ function PreSessionModal({ coachEmail, onClose }: { coachEmail: string; onClose:
     const subject = encodeURIComponent(`Pre-session notes — ${clientName} — ${sessionDateDisplay}`);
     const body = encodeURIComponent(reportText);
     window.location.href = `mailto:${coachEmail}?subject=${subject}&body=${body}`;
+    if (TESTING.enabled) setPhase("feedback");
   };
+
+  const handleFeedbackSend = () => {
+    const lines = [
+      `Feedback from: ${profile.intake.name || "tester"}`,
+      "",
+      "1. Did you know what to do without being told?",
+      feedback.q1 || "(no answer)",
+      "",
+      "2. Was logging quick enough that you'd actually do it in the moment?",
+      feedback.q2 || "(no answer)",
+      "",
+      "3. Did anything feel confusing or make you hesitate?",
+      feedback.q3 || "(no answer)",
+      "",
+      "4. Did the summary look right when you sent it?",
+      feedback.q4 || "(no answer)",
+    ].join("\n");
+    const subject = encodeURIComponent(`App feedback — ${profile.intake.name || "tester"}`);
+    const body = encodeURIComponent(lines);
+    window.location.href = `mailto:${coachEmail}?subject=${subject}&body=${body}`;
+    onClose();
+  };
+
+  if (TESTING.enabled && phase === "feedback") {
+    const questions = [
+      { key: "q1" as const, label: "Did you know what to do without being told?" },
+      { key: "q2" as const, label: "Was logging quick enough that you'd actually do it in the moment?" },
+      { key: "q3" as const, label: "Did anything feel confusing or make you hesitate?" },
+      { key: "q4" as const, label: "Did the summary look right when you sent it?" },
+    ];
+    return (
+      <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur overflow-y-auto">
+        <div className="min-h-full flex flex-col items-start justify-start py-12 px-4">
+          <div className="bg-background border border-border max-w-2xl w-full mx-auto">
+            <div className="p-8 border-b border-border flex items-start justify-between gap-8">
+              <div className="space-y-1">
+                <p className="text-xs uppercase tracking-[0.25em] text-muted-foreground">Your summary is on its way</p>
+                <h2 className="text-2xl font-serif">One more thing</h2>
+                <p className="text-sm text-muted-foreground">Four quick questions while the experience is fresh. Takes under a minute.</p>
+              </div>
+              <button onClick={onClose} className="text-muted-foreground/50 hover:text-foreground text-xl leading-none mt-1">×</button>
+            </div>
+            <div className="p-8 space-y-10">
+              {questions.map(({ key, label }) => (
+                <div key={key} className="space-y-3">
+                  <label className="block text-sm uppercase tracking-[0.18em] text-foreground">{label}</label>
+                  <Textarea
+                    value={feedback[key]}
+                    onChange={e => setFeedback(prev => ({ ...prev, [key]: e.target.value }))}
+                    placeholder="Your answer"
+                    className="w-full bg-transparent border-0 border-b border-border rounded-none focus-visible:ring-0 focus-visible:border-primary px-0 py-2 resize-none min-h-[60px] text-base text-foreground/90 placeholder:text-muted-foreground/30 placeholder:italic"
+                  />
+                </div>
+              ))}
+            </div>
+            <div className="p-8 border-t border-border flex flex-wrap items-center gap-4">
+              <button
+                onClick={onClose}
+                className="px-6 py-3 border border-border text-sm uppercase tracking-[0.18em] text-muted-foreground hover:border-foreground/30 transition-colors"
+              >
+                Skip
+              </button>
+              <button
+                onClick={handleFeedbackSend}
+                className="flex-1 min-w-[160px] px-6 py-3 bg-primary text-primary-foreground text-sm uppercase tracking-[0.18em] hover:opacity-90"
+              >
+                Send feedback
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur overflow-y-auto">
