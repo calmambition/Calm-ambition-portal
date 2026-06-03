@@ -1354,8 +1354,8 @@ function DailyTab({ onNext }: { onNext: () => void }) {
 
         {[
           { field: "whatToRaise" as const, label: "What do you want to raise?" },
-          { field: "whatHasShifted" as const, label: "What has shifted since we last spoke?" },
-          { field: "stillSittingWith" as const, label: "What are you still sitting with?" },
+          { field: "whatHasShifted" as const, label: "What's been different this week?" },
+          { field: "stillSittingWith" as const, label: "What's still on your mind?" },
           { field: "anythingElse" as const, label: "Anything else you want me to know before we meet?" },
         ].map(({ field, label }) => (
           <div key={field} className="space-y-4">
@@ -1895,7 +1895,7 @@ function PatternTab({ onNext }: { onNext: () => void }) {
       items: [profile.intake.unsustainable, profile.intake.impact, profile.intake.ifNothingChanges].filter(Boolean),
     },
     {
-      title: "Triggers",
+      title: "Moments of pressure",
       items: [profile.intake.lastMoment, ...profile.logs.map(l => l.moment)].filter(Boolean),
     },
     {
@@ -2142,8 +2142,8 @@ function buildReportText(profile: import("./hooks/use-client-profile").ClientPro
     lines.push("BEFORE OUR NEXT SESSION");
     lines.push("");
     if (prep.whatToRaise) { lines.push("What I want to raise:"); lines.push(prep.whatToRaise); lines.push(""); }
-    if (prep.whatHasShifted) { lines.push("What has shifted since we last spoke:"); lines.push(prep.whatHasShifted); lines.push(""); }
-    if (prep.stillSittingWith) { lines.push("What I am still sitting with:"); lines.push(prep.stillSittingWith); lines.push(""); }
+    if (prep.whatHasShifted) { lines.push("What's been different this week:"); lines.push(prep.whatHasShifted); lines.push(""); }
+    if (prep.stillSittingWith) { lines.push("What's still on my mind:"); lines.push(prep.stillSittingWith); lines.push(""); }
     if (prep.anythingElse) { lines.push("Anything else:"); lines.push(prep.anythingElse); lines.push(""); }
   }
 
@@ -2360,7 +2360,7 @@ function PreSessionModal({ coachEmail, onClose }: { coachEmail: string; onClose:
                     )}
                     {prep.stillSittingWith && (
                       <div>
-                        <p className="text-[10px] uppercase tracking-widest text-muted-foreground/60 mb-1">Still sitting with</p>
+                        <p className="text-[10px] uppercase tracking-widest text-muted-foreground/60 mb-1">What's still on my mind</p>
                         <p>{prep.stillSittingWith}</p>
                       </div>
                     )}

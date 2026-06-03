@@ -39,7 +39,7 @@ export function PrintExport({ profile }: PrintExportProps) {
       ].filter(Boolean),
     },
     {
-      title: "Triggers",
+      title: "Moments of pressure",
       items: [
         profile.intake.lastMoment,
         ...profile.logs.map((l) => l.moment),
@@ -407,12 +407,12 @@ export function PrintExport({ profile }: PrintExportProps) {
               </Section>
             )}
             {profile.nextSessionPrep.whatHasShifted && (
-              <Section label="What has shifted since we last spoke">
+              <Section label="What's been different this week">
                 <p>{profile.nextSessionPrep.whatHasShifted}</p>
               </Section>
             )}
             {profile.nextSessionPrep.stillSittingWith && (
-              <Section label="What they are still sitting with">
+              <Section label="What's still on their mind">
                 <p>{profile.nextSessionPrep.stillSittingWith}</p>
               </Section>
             )}
