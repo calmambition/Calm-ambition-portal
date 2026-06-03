@@ -1,0 +1,338 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Jost:wght@300;400;500&display=swap');
+
+@import "tailwindcss";
+@import "tw-animate-css";
+@plugin "@tailwindcss/typography";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+  --color-card-border: hsl(var(--card-border));
+
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+  --color-popover-border: hsl(var(--popover-border));
+
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-primary-border: var(--primary-border);
+
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+  --color-secondary-border: var(--secondary-border);
+
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+  --color-muted-border: var(--muted-border);
+
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+  --color-accent-border: var(--accent-border);
+
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+  --color-destructive-border: var(--destructive-border);
+
+  --color-sidebar: hsl(var(--sidebar));
+  --color-sidebar-foreground: hsl(var(--sidebar-foreground));
+  --color-sidebar-border: hsl(var(--sidebar-border));
+  --color-sidebar-primary: hsl(var(--sidebar-primary));
+  --color-sidebar-primary-foreground: hsl(var(--sidebar-primary-foreground));
+  --color-sidebar-primary-border: var(--sidebar-primary-border);
+  --color-sidebar-accent: hsl(var(--sidebar-accent));
+  --color-sidebar-accent-foreground: hsl(var(--sidebar-accent-foreground));
+  --color-sidebar-accent-border: var(--sidebar-accent-border);
+  --color-sidebar-ring: hsl(var(--sidebar-ring));
+
+  --font-sans: 'Jost', sans-serif;
+  --font-serif: 'Cormorant Garamond', serif;
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+:root {
+  --background: 40 33% 97%; /* #FAF8F4 */
+  --foreground: 130 14% 14%; /* #1E2820 */
+  
+  --card: 37 38% 94%; /* #F5F0E8 */
+  --card-foreground: 130 14% 14%; /* #1E2820 */
+  --card-border: 35 15% 85%;
+  
+  --popover: 37 38% 94%;
+  --popover-foreground: 130 14% 14%;
+  --popover-border: 35 15% 85%;
+  
+  --primary: 120 14% 42%; /* #5C7A5C */
+  --primary-foreground: 37 38% 94%; /* #F5F0E8 */
+  
+  --secondary: 104 22% 87%; /* #D8E4D4 */
+  --secondary-foreground: 130 14% 14%;
+  
+  --muted: 35 15% 90%;
+  --muted-foreground: 130 14% 22%; /* #2E3D30 */
+  
+  --accent: 120 14% 42%; /* #5C7A5C */
+  --accent-foreground: 37 38% 94%;
+  
+  --destructive: 18 40% 55%; /* #C17A5A */
+  --destructive-foreground: 40 33% 97%;
+  
+  --border: 35 15% 85%;
+  --input: 35 15% 85%;
+  --ring: 120 14% 42%;
+  
+  --radius: 0rem; /* No rounded corners for elegant feel */
+}
+
+.dark {
+  --background: 40 33% 97%;
+  --foreground: 130 14% 14%;
+  --card: 37 38% 94%;
+  --card-foreground: 130 14% 14%;
+  --card-border: 35 15% 85%;
+  --popover: 37 38% 94%;
+  --popover-foreground: 130 14% 14%;
+  --popover-border: 35 15% 85%;
+  --primary: 120 14% 42%;
+  --primary-foreground: 37 38% 94%;
+  --secondary: 104 22% 87%;
+  --secondary-foreground: 130 14% 14%;
+  --muted: 35 15% 90%;
+  --muted-foreground: 130 14% 22%;
+  --accent: 120 14% 42%;
+  --accent-foreground: 37 38% 94%;
+  --destructive: 18 40% 55%;
+  --destructive-foreground: 40 33% 97%;
+  --border: 35 15% 85%;
+  --input: 35 15% 85%;
+  --ring: 120 14% 42%;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply font-sans antialiased bg-background text-foreground;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-serif font-light;
+  }
+}
+
+/* ─── Print export ─────────────────────────────────────────────── */
+
+#print-export,
+#print-history {
+  display: none;
+}
+
+@media print {
+  /* Hide everything in the app */
+  body > #root > * {
+    display: none !important;
+  }
+
+  /* History-only mode */
+  body[data-print-mode="history"] #print-export {
+    display: none !important;
+  }
+  body[data-print-mode="history"] #print-history {
+    display: block !important;
+  }
+
+  /* Default: show full export */
+  #print-export {
+    display: block !important;
+    font-family: 'Jost', sans-serif;
+    font-size: 11pt;
+    line-height: 1.8;
+    color: #1E2820;
+    background: #FAF8F4;
+    padding: 0;
+    margin: 0;
+  }
+
+  @page {
+    size: A4;
+    margin: 20mm 22mm 22mm 22mm;
+  }
+
+  .print-header {
+    display: flex;
+    flex-direction: column;
+    gap: 10pt;
+    margin-bottom: 20pt;
+  }
+
+  .print-header-top {
+    display: flex;
+    align-items: baseline;
+    gap: 16pt;
+  }
+
+  .print-wordmark {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 300;
+    font-size: 26pt;
+    line-height: 1;
+    color: #1E2820;
+    margin: 0;
+  }
+
+  .print-tagline {
+    font-family: 'Jost', sans-serif;
+    font-size: 7pt;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: #2E3D30;
+    margin: 0;
+  }
+
+  .print-header-meta {
+    display: flex;
+    gap: 16pt;
+    align-items: center;
+  }
+
+  .print-meta-item {
+    font-size: 8.5pt;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #2E3D30;
+  }
+
+  .print-meta-item + .print-meta-item::before {
+    content: '·';
+    margin-right: 16pt;
+    color: #5C7A5C;
+  }
+
+  .print-rule {
+    border: none;
+    border-top: 0.5pt solid #D8E4D4;
+    margin: 18pt 0;
+    page-break-after: avoid;
+  }
+
+  .print-block {
+    margin-bottom: 6pt;
+    page-break-inside: avoid;
+  }
+
+  .print-block-heading {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 300;
+    font-size: 18pt;
+    line-height: 1.15;
+    color: #1E2820;
+    margin: 0 0 12pt 0;
+    page-break-after: avoid;
+  }
+
+  .print-section {
+    margin-bottom: 12pt;
+    page-break-inside: avoid;
+  }
+
+  .print-label {
+    font-size: 7pt;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: #5C7A5C;
+    margin: 0 0 4pt 0;
+    font-weight: 500;
+  }
+
+  .print-content p {
+    font-size: 10.5pt;
+    line-height: 1.75;
+    color: #2E3D30;
+    margin: 0 0 4pt 0;
+  }
+
+  .print-item-secondary {
+    color: #2E3D30;
+    opacity: 0.8;
+    margin-top: 4pt !important;
+    padding-left: 12pt;
+    border-left: 1.5pt solid #D8E4D4;
+  }
+
+  .print-log-entry {
+    margin-bottom: 16pt;
+    padding-bottom: 16pt;
+    border-bottom: 0.5pt solid #D8E4D4;
+    page-break-inside: avoid;
+  }
+
+  .print-log-entry:last-child {
+    border-bottom: none;
+  }
+
+  .print-log-date {
+    font-size: 7pt;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: #5C7A5C;
+    font-weight: 500;
+    margin: 0 0 8pt 0;
+  }
+
+  .print-chips {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6pt;
+  }
+
+  .print-chip {
+    font-size: 9pt;
+    background: #D8E4D4;
+    color: #1E2820;
+    padding: 3pt 9pt;
+    letter-spacing: 0.05em;
+  }
+
+  .print-opening-line {
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-size: 12pt;
+    color: #1E2820;
+    margin: 0;
+    line-height: 1.6;
+  }
+
+  .print-coach-notes {
+    font-style: italic;
+    color: #2E3D30;
+    background: #F5F0E8;
+    border-left: 2pt solid #5C7A5C;
+    padding: 6pt 10pt;
+    margin: 0;
+  }
+
+  .print-footer {
+    margin-top: 28pt;
+    padding-top: 10pt;
+    border-top: 0.5pt solid #D8E4D4;
+    font-size: 7pt;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: #5C7A5C;
+    text-align: center;
+  }
+}
