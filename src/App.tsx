@@ -1100,35 +1100,31 @@ function DailyTab({ onNext }: { onNext: () => void }) {
 
   return (
     <div className="space-y-16">
-      <div className="bg-card p-8 space-y-6 border border-card-border">
-        {!profile.sessionAnchor.whatWeNamed ? (
-          <p className="text-muted-foreground font-serif italic text-lg">Session anchor not yet set.</p>
-        ) : (
-          <>
-            {profile.sessionAnchor.weeklyOpeningLine && (
-              <div className="pb-6 border-b border-border">
-                <p className="text-[10px] uppercase tracking-[0.25em] text-primary mb-3">From your coach</p>
-                <p className="text-xl font-serif italic leading-snug text-foreground/90">{profile.sessionAnchor.weeklyOpeningLine}</p>
-              </div>
-            )}
+      {profile.sessionAnchor.whatWeNamed && (
+        <div className="bg-card p-8 space-y-6 border border-card-border">
+          {profile.sessionAnchor.weeklyOpeningLine && (
+            <div className="pb-6 border-b border-border">
+              <p className="text-[10px] uppercase tracking-[0.25em] text-primary mb-3">From your coach</p>
+              <p className="text-xl font-serif italic leading-snug text-foreground/90">{profile.sessionAnchor.weeklyOpeningLine}</p>
+            </div>
+          )}
+          <div>
+            <p className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground mb-2">What we named</p>
+            <p className="text-lg">{profile.sessionAnchor.whatWeNamed}</p>
+          </div>
+          <div className="w-full h-px bg-border"></div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div>
-              <p className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground mb-2">What we named</p>
-              <p className="text-lg">{profile.sessionAnchor.whatWeNamed}</p>
+              <p className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground mb-2">This week's focus</p>
+              <p>{profile.sessionAnchor.thisWeekFocus}</p>
             </div>
-            <div className="w-full h-px bg-border"></div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <div>
-                <p className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground mb-2">This week's focus</p>
-                <p>{profile.sessionAnchor.thisWeekFocus}</p>
-              </div>
-              <div>
-                <p className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground mb-2">Recovery anchor</p>
-                <p>{profile.sessionAnchor.recoveryAnchor}</p>
-              </div>
+            <div>
+              <p className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground mb-2">Recovery anchor</p>
+              <p>{profile.sessionAnchor.recoveryAnchor}</p>
             </div>
-          </>
-        )}
-      </div>
+          </div>
+        </div>
+      )}
 
       <div className="space-y-8">
         <h2 className="text-3xl font-serif">Log a moment</h2>

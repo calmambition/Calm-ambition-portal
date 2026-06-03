@@ -495,10 +495,6 @@ export function useClientProfile() {
         ? {
             ...defaultProfile.sessionAnchor,
             sessionDate: new Date(Date.now() - 3 * 86400000).toISOString().slice(0, 10),
-            weeklyOpeningLine: "Capture the moments as they happen this fortnight. A sentence is enough.",
-            whatWeNamed: "Getting a feel for the practice. Notice, capture, no pressure to fix.",
-            thisWeekFocus: "Notice where the pressure shows up this week.",
-            recoveryAnchor: "One small thing that steadies you. Start there.",
           }
         : defaultProfile.sessionAnchor,
     };
