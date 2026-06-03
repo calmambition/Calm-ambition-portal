@@ -479,7 +479,7 @@ export function useClientProfile() {
     setProfileState(profileRaw ? JSON.parse(profileRaw) : null);
   }, []);
 
-  const createClient = useCallback((name = "", role = "") => {
+  const createClient = useCallback((name = "", role = "", behaviour = "") => {
     const id = "client-" + Date.now();
     const entry: ClientEntry = {
       id,
@@ -495,6 +495,7 @@ export function useClientProfile() {
         ? {
             ...defaultProfile.sessionAnchor,
             sessionDate: new Date(Date.now() - 3 * 86400000).toISOString().slice(0, 10),
+            thisWeekBehaviour: behaviour,
           }
         : defaultProfile.sessionAnchor,
     };

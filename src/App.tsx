@@ -209,6 +209,107 @@ function CoachPinDialog({ onSuccess, onCancel, settings }: {
   );
 }
 
+function TestOnboardingScreen({ onComplete, onCoachAccess }: {
+  onComplete: (name: string, behaviour: string) => void;
+  onCoachAccess: () => void;
+}) {
+  const [step, setStep] = useState<1 | 2>(1);
+  const [name, setName] = useState("");
+  const [behaviour, setBehaviour] = useState("");
+
+  const primaryBtn = "w-full bg-primary text-primary-foreground py-4 px-8 text-sm uppercase tracking-[0.18em] hover:opacity-90 transition-opacity disabled:opacity-30 disabled:cursor-not-allowed";
+
+  return (
+    <div className="min-h-[100dvh] w-full flex flex-col items-center justify-center bg-background px-6">
+      <div className="max-w-md w-full space-y-12">
+        <div className="space-y-4 text-center">
+          <h1 className="text-5xl text-foreground">Calm Ambition</h1>
+          <p className="text-muted-foreground tracking-[0.25em] text-xs uppercase">
+            {step === 1 ? "Step 1 of 2" : "Step 2 of 2"}
+          </p>
+        </div>
+
+        <AnimatePresence mode="wait">
+          {step === 1 && (
+            <motion.div
+              key="step1"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.3 }}
+              className="space-y-10"
+            >
+              <div className="space-y-4">
+                <label className="block text-sm uppercase tracking-[0.18em] text-foreground">Your name</label>
+                <input
+                  type="text"
+                  value={name}
+                  onChange={e => setName(e.target.value)}
+                  onKeyDown={e => e.key === "Enter" && name.trim() && setStep(2)}
+                  placeholder="First name is fine"
+                  autoFocus
+                  className="w-full bg-transparent border-b border-border focus:outline-none focus:border-primary py-2 text-xl text-foreground/90 placeholder:text-muted-foreground/40"
+                />
+              </div>
+              <button
+                onClick={() => setStep(2)}
+                disabled={!name.trim()}
+                className={primaryBtn}
+              >
+                Continue
+              </button>
+            </motion.div>
+          )}
+
+          {step === 2 && (
+            <motion.div
+              key="step2"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.3 }}
+              className="space-y-10"
+            >
+              <div className="space-y-4">
+                <label className="block text-sm uppercase tracking-[0.18em] text-foreground">One small thing to try this week</label>
+                <p className="text-sm text-muted-foreground">A behaviour, not a goal. Something specific enough that you'd know if you did it.</p>
+                <Textarea
+                  value={behaviour}
+                  onChange={e => setBehaviour(e.target.value)}
+                  placeholder="e.g. Leave my phone in another room at dinner"
+                  className="w-full bg-transparent border-0 border-b border-border rounded-none focus-visible:ring-0 focus-visible:border-primary px-0 py-2 resize-none min-h-[80px] text-lg text-foreground/90 placeholder:text-muted-foreground/30 placeholder:italic"
+                />
+              </div>
+              <div className="space-y-3">
+                <button
+                  onClick={() => onComplete(name.trim(), behaviour.trim())}
+                  disabled={!behaviour.trim()}
+                  className={primaryBtn}
+                >
+                  Open my tool
+                </button>
+                <button
+                  onClick={() => onComplete(name.trim(), "")}
+                  className="w-full py-3 text-sm uppercase tracking-[0.18em] text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  Skip for now
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <button
+          onClick={onCoachAccess}
+          className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground/40 hover:text-muted-foreground transition-colors block mx-auto"
+        >
+          Coach access
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function EntryScreen({ onStart, onDemo, onCoachAccess }: { onStart: () => void, onDemo: (id: "alex" | "sam" | "maya") => void, onCoachAccess: () => void }) {
   const [showDemos, setShowDemos] = useState(false);
 
@@ -492,6 +593,12 @@ function HomeScreen({ coachName: coachNameProp, coachEmail, onLog, onPattern, on
       </p>
 
       <button onClick={onLog} className={primaryBtn}>Log a moment</button>
+
+      {TESTING.enabled && logsSince >= 3 && (
+        <button onClick={onSend} className={ghostBtn}>
+          Ready to send your summary?
+        </button>
+      )}
 
       {(logsSince >= 3 || resetDue) && (
         <div className="space-y-3">
@@ -2405,7 +2512,10 @@ export default function App() {
         {showPinDialog && (
           <CoachPinDialog settings={settings} onSuccess={handlePinSuccess} onCancel={() => setShowPinDialog(false)} />
         )}
-        <EntryScreen onStart={() => createClient()} onDemo={loadDemo} onCoachAccess={handleCoachAccess} />
+        {TESTING.enabled
+          ? <TestOnboardingScreen onComplete={(name, behaviour) => createClient(name, "", behaviour)} onCoachAccess={handleCoachAccess} />
+          : <EntryScreen onStart={() => createClient()} onDemo={loadDemo} onCoachAccess={handleCoachAccess} />
+        }
         <Toaster />
       </TooltipProvider>
     );
