@@ -270,14 +270,32 @@ function TestOnboardingScreen({ onComplete, onCoachAccess }: {
               transition={{ duration: 0.3 }}
               className="space-y-10"
             >
-              <div className="space-y-4">
-                <label className="block text-sm uppercase tracking-[0.18em] text-foreground">One small thing to try this week</label>
-                <p className="text-sm text-muted-foreground">A behaviour, not a goal. Something specific enough that you'd know if you did it.</p>
+              <div className="space-y-6">
+                <div className="space-y-2">
+                  <label className="block text-sm uppercase tracking-[0.18em] text-foreground">One small thing to try this week</label>
+                  <p className="text-sm text-muted-foreground">A behaviour, not a goal. Something specific enough that you'd know if you did it.</p>
+                </div>
+                <div className="space-y-2">
+                  <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">Examples</p>
+                  {[
+                    "Stop checking my phone for the first 30 minutes after I wake up",
+                    "Take a proper lunch break away from my desk, even for 15 minutes",
+                    "Leave work at a set time two days this week, no exceptions",
+                  ].map(example => (
+                    <button
+                      key={example}
+                      onClick={() => setBehaviour(example)}
+                      className="block w-full text-left px-4 py-3 border border-border text-sm text-foreground/70 hover:border-foreground/30 hover:text-foreground transition-colors"
+                    >
+                      {example}
+                    </button>
+                  ))}
+                </div>
                 <Textarea
                   value={behaviour}
                   onChange={e => setBehaviour(e.target.value)}
-                  placeholder="e.g. Leave my phone in another room at dinner"
-                  className="w-full bg-transparent border-0 border-b border-border rounded-none focus-visible:ring-0 focus-visible:border-primary px-0 py-2 resize-none min-h-[80px] text-lg text-foreground/90 placeholder:text-muted-foreground/30 placeholder:italic"
+                  placeholder="Or write your own"
+                  className="w-full bg-transparent border-0 border-b border-border rounded-none focus-visible:ring-0 focus-visible:border-primary px-0 py-2 resize-none min-h-[60px] text-lg text-foreground/90 placeholder:text-muted-foreground/30 placeholder:italic"
                 />
               </div>
               <div className="space-y-3">
