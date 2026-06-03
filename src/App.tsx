@@ -278,9 +278,9 @@ function TestOnboardingScreen({ onComplete, onCoachAccess }: {
                 <div className="space-y-2">
                   <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">Examples</p>
                   {[
-                    "Stop checking my phone for the first 30 minutes after I wake up",
-                    "Take a proper lunch break away from my desk, even for 15 minutes",
-                    "Leave work at a set time two days this week, no exceptions",
+                    "A 10-minute gap between finishing work and starting the evening — no phone, no tasks",
+                    "One break during the day where I'm not also eating, scrolling, or on a call",
+                    "Move my body once today in a way that has nothing to do with being productive",
                   ].map(example => (
                     <button
                       key={example}
