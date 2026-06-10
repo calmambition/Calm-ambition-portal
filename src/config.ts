@@ -1,17 +1,16 @@
 // ─────────────────────────────────────────────────────────────
-// Testing mode.
+// Coach identity.
 //
-// When `enabled` is true, the app is set up for a friends test:
-//   - coach setup is skipped (these defaults are seeded automatically)
-//   - a new client gets a seeded session date, so the countdown home shows
-//   - clients can export their own data to send to the coach
+// This portal is deployed for one coach. Every device seeds these
+// details on first open, so clients land in onboarding rather than
+// a coach setup screen.
 //
-// BEFORE REAL LAUNCH: set `enabled` to false. Real coaches will then
-// go through first-time setup and pick their own email and PIN.
+// The coach PIN is NOT stored here (this repo is public). It is
+// created on each device the first time coach access is used, and
+// can be changed later in Settings. The PIN gates the coach UI on
+// that device only; it is not account security.
 // ─────────────────────────────────────────────────────────────
-export const TESTING = {
-  enabled: true,
-  coachName: "Priyanka Jain",
-  coachEmail: "thecalmcoach.pri@gmail.com",
-  coachPin: "0000",
+export const COACH = {
+  name: "Priyanka Jain",
+  email: "thecalmcoach.pri@gmail.com",
 };

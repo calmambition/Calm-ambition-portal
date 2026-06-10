@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { TESTING } from '../config';
 
 export interface ClientEntry {
   id: string;
@@ -479,7 +478,7 @@ export function useClientProfile() {
     setProfileState(profileRaw ? JSON.parse(profileRaw) : null);
   }, []);
 
-  const createClient = useCallback((name = "", role = "", behaviour = "") => {
+  const createClient = useCallback((name = "", role = "", extraIntake: Partial<ClientProfile["intake"]> = {}) => {
     const id = "client-" + Date.now();
     const entry: ClientEntry = {
       id,
@@ -489,15 +488,7 @@ export function useClientProfile() {
     };
     const newProfile: ClientProfile = {
       ...defaultProfile,
-      intake: { ...defaultProfile.intake, name, currentRole: role },
-      // Test mode: seed a recent session so the countdown home appears for testers.
-      sessionAnchor: TESTING.enabled
-        ? {
-            ...defaultProfile.sessionAnchor,
-            sessionDate: new Date(Date.now() - 3 * 86400000).toISOString().slice(0, 10),
-            thisWeekBehaviour: behaviour,
-          }
-        : defaultProfile.sessionAnchor,
+      intake: { ...defaultProfile.intake, ...extraIntake, name, currentRole: role },
     };
     const updatedClients = [...clientsRef.current, entry];
     persistClients(updatedClients);

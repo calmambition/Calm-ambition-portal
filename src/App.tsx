@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { TESTING } from "./config";
+import { COACH } from "./config";
 import { useClientProfile } from "./hooks/use-client-profile";
 import { useAppSettings, AppSettings } from "./hooks/use-app-settings";
 import { Toaster } from "@/components/ui/toaster";
@@ -8,87 +8,6 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { Textarea } from "@/components/ui/textarea";
 import { PrintExport } from "./components/PrintExport";
 import { PrintHistory } from "./components/PrintHistory";
-
-function SetupScreen({ onComplete }: { onComplete: (s: AppSettings) => void }) {
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [pin, setPin] = useState("");
-  const [pinConfirm, setPinConfirm] = useState("");
-  const [error, setError] = useState("");
-
-  const handleSubmit = () => {
-    if (!name.trim()) { setError("Your name is required."); return; }
-    if (!email.trim()) { setError("Coach email is required."); return; }
-    if (pin.length < 4) { setError("PIN must be at least 4 digits."); return; }
-    if (pin !== pinConfirm) { setError("PINs do not match."); return; }
-    onComplete({ coachName: name.trim(), coachEmail: email.trim(), coachPin: pin });
-  };
-
-  return (
-    <div className="min-h-[100dvh] w-full flex flex-col items-center justify-center bg-background px-6">
-      <div className="max-w-md w-full space-y-12">
-        <div className="space-y-4 text-center">
-          <h1 className="text-5xl text-foreground">Calm Ambition</h1>
-          <p className="text-muted-foreground tracking-[0.25em] text-xs uppercase">First-time setup</p>
-        </div>
-        <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
-          <p className="text-foreground/70">Set your name, email, and a PIN. Clients will never see this screen.</p>
-          <div className="space-y-4">
-            <label className="block text-sm uppercase tracking-[0.18em] text-foreground">Your name</label>
-            <p className="text-xs text-muted-foreground">Shown to your clients, for example "3 days until your session with Priyanka".</p>
-            <input
-              type="text"
-              value={name}
-              onChange={e => setName(e.target.value)}
-              placeholder="Priyanka"
-              className="w-full bg-transparent border-b border-border focus:outline-none focus:border-primary py-2 text-lg text-foreground/90 placeholder:text-muted-foreground/40"
-            />
-          </div>
-          <div className="space-y-4">
-            <label className="block text-sm uppercase tracking-[0.18em] text-foreground">Your email address</label>
-            <input
-              type="email"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              placeholder="you@example.com"
-              className="w-full bg-transparent border-b border-border focus:outline-none focus:border-primary py-2 text-lg text-foreground/90 placeholder:text-muted-foreground/40"
-            />
-          </div>
-          <div className="space-y-4">
-            <label className="block text-sm uppercase tracking-[0.18em] text-foreground">Coach PIN</label>
-            <p className="text-xs text-muted-foreground">Used to unlock your private notes and full history. Keep it to yourself.</p>
-            <input
-              type="password"
-              inputMode="numeric"
-              value={pin}
-              onChange={e => setPin(e.target.value.replace(/\D/g, "").slice(0, 8))}
-              placeholder="4 or more digits"
-              className="w-full bg-transparent border-b border-border focus:outline-none focus:border-primary py-2 text-lg text-foreground/90 placeholder:text-muted-foreground/40"
-            />
-          </div>
-          <div className="space-y-4">
-            <label className="block text-sm uppercase tracking-[0.18em] text-foreground">Confirm PIN</label>
-            <input
-              type="password"
-              inputMode="numeric"
-              value={pinConfirm}
-              onChange={e => setPinConfirm(e.target.value.replace(/\D/g, "").slice(0, 8))}
-              placeholder="Re-enter PIN"
-              className="w-full bg-transparent border-b border-border focus:outline-none focus:border-primary py-2 text-lg text-foreground/90 placeholder:text-muted-foreground/40"
-            />
-          </div>
-          {error && <p className="text-sm text-destructive">{error}</p>}
-          <button
-            onClick={handleSubmit}
-            className="w-full bg-primary text-primary-foreground py-4 px-8 text-sm uppercase tracking-[0.18em] hover:opacity-90 transition-opacity"
-          >
-            Save and continue
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 function SettingsDialog({ settings, onSave, onClose }: {
   settings: AppSettings;
@@ -158,18 +77,28 @@ function SettingsDialog({ settings, onSave, onClose }: {
   );
 }
 
-function CoachPinDialog({ onSuccess, onCancel, settings }: {
+function CoachPinDialog({ onSuccess, onCancel, onCreatePin, settings }: {
   onSuccess: () => void;
   onCancel: () => void;
+  onCreatePin: (pin: string) => void;
   settings: AppSettings;
 }) {
+  // No PIN on this device yet: the first use of coach access creates one.
+  const creating = !settings.coachPin;
   const [pin, setPin] = useState("");
+  const [pinConfirm, setPinConfirm] = useState("");
   const [error, setError] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => { inputRef.current?.focus(); }, []);
 
   const handleSubmit = () => {
+    if (creating) {
+      if (pin.length < 4) { setError("PIN must be at least 4 digits."); return; }
+      if (pin !== pinConfirm) { setError("PINs do not match."); return; }
+      onCreatePin(pin);
+      return;
+    }
     if (pin === settings.coachPin) {
       onSuccess();
     } else {
@@ -183,22 +112,38 @@ function CoachPinDialog({ onSuccess, onCancel, settings }: {
       <div className="bg-background border border-border max-w-sm w-full p-10 space-y-8">
         <div className="space-y-2">
           <p className="text-xs uppercase tracking-[0.25em] text-muted-foreground">Coach access</p>
-          <h2 className="text-3xl font-serif">Enter your PIN</h2>
+          <h2 className="text-3xl font-serif">{creating ? "Create your PIN" : "Enter your PIN"}</h2>
+          {creating && (
+            <p className="text-sm text-muted-foreground">
+              This device has no coach PIN yet. Choose one to unlock the coach tools here. You can change it later in Settings.
+            </p>
+          )}
         </div>
         <input
           ref={inputRef}
           type="password"
           inputMode="numeric"
           value={pin}
-          onChange={e => { setPin(e.target.value.replace(/\D/g, "")); setError(""); }}
+          onChange={e => { setPin(e.target.value.replace(/\D/g, "").slice(0, 8)); setError(""); }}
           onKeyDown={e => e.key === "Enter" && handleSubmit()}
-          placeholder="PIN"
+          placeholder={creating ? "4 or more digits" : "PIN"}
           className="w-full bg-transparent border-b border-border focus:outline-none focus:border-primary py-2 text-xl text-foreground/90 placeholder:text-muted-foreground/40 tracking-[0.4em]"
         />
+        {creating && (
+          <input
+            type="password"
+            inputMode="numeric"
+            value={pinConfirm}
+            onChange={e => { setPinConfirm(e.target.value.replace(/\D/g, "").slice(0, 8)); setError(""); }}
+            onKeyDown={e => e.key === "Enter" && handleSubmit()}
+            placeholder="Confirm PIN"
+            className="w-full bg-transparent border-b border-border focus:outline-none focus:border-primary py-2 text-xl text-foreground/90 placeholder:text-muted-foreground/40 tracking-[0.4em]"
+          />
+        )}
         {error && <p className="text-sm text-destructive">{error}</p>}
         <div className="flex gap-4">
           <button onClick={handleSubmit} className="flex-1 bg-primary text-primary-foreground py-3 text-sm uppercase tracking-[0.18em] hover:opacity-90">
-            Unlock
+            {creating ? "Create and unlock" : "Unlock"}
           </button>
           <button onClick={onCancel} className="px-6 py-3 border border-border text-sm uppercase tracking-[0.18em] text-muted-foreground hover:text-foreground">
             Cancel
@@ -209,36 +154,38 @@ function CoachPinDialog({ onSuccess, onCancel, settings }: {
   );
 }
 
-function TestOnboardingScreen({ onComplete, onCoachAccess }: {
-  onComplete: (name: string, behaviour: string) => void;
+function ClientOnboarding({ onComplete, onCoachAccess, coachFirstName }: {
+  onComplete: (name: string, role: string, unsustainable: string) => void;
   onCoachAccess: () => void;
+  coachFirstName: string;
 }) {
-  const [step, setStep] = useState<1 | 2>(1);
+  const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
   const [name, setName] = useState("");
-  const [behaviour, setBehaviour] = useState("");
+  const [role, setRole] = useState("");
+  const [unsustainable, setUnsustainable] = useState("");
 
   const primaryBtn = "w-full bg-primary text-primary-foreground py-4 px-8 text-sm uppercase tracking-[0.18em] hover:opacity-90 transition-opacity disabled:opacity-30 disabled:cursor-not-allowed";
+  const skipBtn = "w-full py-3 text-sm uppercase tracking-[0.18em] text-muted-foreground hover:text-foreground transition-colors";
+  const inputCls = "w-full bg-transparent border-b border-border focus:outline-none focus:border-primary py-2 text-xl text-foreground/90 placeholder:text-muted-foreground/40";
+
+  const stepAnim = {
+    initial: { opacity: 0, y: 10 },
+    animate: { opacity: 1, y: 0 },
+    exit: { opacity: 0, y: -10 },
+    transition: { duration: 0.3 },
+  };
 
   return (
-    <div className="min-h-[100dvh] w-full flex flex-col items-center justify-center bg-background px-6">
+    <div className="min-h-[100dvh] w-full flex flex-col items-center justify-center bg-background px-6 py-12">
       <div className="max-w-md w-full space-y-12">
         <div className="space-y-4 text-center">
           <h1 className="text-5xl text-foreground">Calm Ambition</h1>
-          <p className="text-muted-foreground tracking-[0.25em] text-xs uppercase">
-            {step === 1 ? "Step 1 of 2" : "Step 2 of 2"}
-          </p>
+          <p className="text-muted-foreground tracking-[0.25em] text-xs uppercase">Step {step} of 4</p>
         </div>
 
         <AnimatePresence mode="wait">
           {step === 1 && (
-            <motion.div
-              key="step1"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.3 }}
-              className="space-y-10"
-            >
+            <motion.div key="step1" {...stepAnim} className="space-y-10">
               <div className="space-y-4">
                 <label className="block text-sm uppercase tracking-[0.18em] text-foreground">Your name</label>
                 <input
@@ -248,71 +195,84 @@ function TestOnboardingScreen({ onComplete, onCoachAccess }: {
                   onKeyDown={e => e.key === "Enter" && name.trim() && setStep(2)}
                   placeholder="First name is fine"
                   autoFocus
-                  className="w-full bg-transparent border-b border-border focus:outline-none focus:border-primary py-2 text-xl text-foreground/90 placeholder:text-muted-foreground/40"
+                  className={inputCls}
                 />
               </div>
-              <button
-                onClick={() => setStep(2)}
-                disabled={!name.trim()}
-                className={primaryBtn}
-              >
+              <button onClick={() => setStep(2)} disabled={!name.trim()} className={primaryBtn}>
                 Continue
               </button>
             </motion.div>
           )}
 
           {step === 2 && (
-            <motion.div
-              key="step2"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.3 }}
-              className="space-y-10"
-            >
-              <div className="space-y-6">
-                <div className="space-y-2">
-                  <label className="block text-sm uppercase tracking-[0.18em] text-foreground">One small thing to try this week</label>
-                  <p className="text-sm text-muted-foreground">A behaviour, not a goal. Something specific enough that you'd know if you did it.</p>
-                </div>
-                <div className="space-y-2">
-                  <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">Examples</p>
-                  {[
-                    "A 10-minute gap between finishing work and starting the evening. No phone, no tasks.",
-                    "One break during the day where I am not also eating, scrolling, or on a call.",
-                    "Move my body once today in a way that has nothing to do with being productive.",
-                  ].map(example => (
-                    <button
-                      key={example}
-                      onClick={() => setBehaviour(example)}
-                      className="block w-full text-left px-4 py-3 border border-border text-sm text-foreground/70 hover:border-foreground/30 hover:text-foreground transition-colors"
-                    >
-                      {example}
-                    </button>
-                  ))}
-                </div>
-                <Textarea
-                  value={behaviour}
-                  onChange={e => setBehaviour(e.target.value)}
-                  placeholder="Or write your own"
-                  className="w-full bg-transparent border-0 border-b border-border rounded-none focus-visible:ring-0 focus-visible:border-primary px-0 py-2 resize-none min-h-[60px] text-lg text-foreground/90 placeholder:text-muted-foreground/30 placeholder:italic"
+            <motion.div key="step2" {...stepAnim} className="space-y-10">
+              <div className="space-y-4">
+                <label className="block text-sm uppercase tracking-[0.18em] text-foreground">Your role</label>
+                <p className="text-sm text-muted-foreground">So {coachFirstName} can see your week in context.</p>
+                <input
+                  type="text"
+                  value={role}
+                  onChange={e => setRole(e.target.value)}
+                  onKeyDown={e => e.key === "Enter" && setStep(3)}
+                  placeholder="For example: Head of Operations"
+                  autoFocus
+                  className={inputCls}
                 />
               </div>
               <div className="space-y-3">
-                <button
-                  onClick={() => onComplete(name.trim(), behaviour.trim())}
-                  disabled={!behaviour.trim()}
-                  className={primaryBtn}
-                >
-                  Open my tool
+                <button onClick={() => setStep(3)} disabled={!role.trim()} className={primaryBtn}>
+                  Continue
                 </button>
-                <button
-                  onClick={() => onComplete(name.trim(), "")}
-                  className="w-full py-3 text-sm uppercase tracking-[0.18em] text-muted-foreground hover:text-foreground transition-colors"
-                >
+                <button onClick={() => setStep(3)} className={skipBtn}>
                   Skip for now
                 </button>
               </div>
+            </motion.div>
+          )}
+
+          {step === 3 && (
+            <motion.div key="step3" {...stepAnim} className="space-y-10">
+              <div className="space-y-4">
+                <label className="block text-sm uppercase tracking-[0.18em] text-foreground">What feels unsustainable right now?</label>
+                <p className="text-sm text-muted-foreground">A sentence or two. You will go deeper with {coachFirstName} in session.</p>
+                <Textarea
+                  value={unsustainable}
+                  onChange={e => setUnsustainable(e.target.value)}
+                  placeholder="The pace, the load, the way the days end..."
+                  autoFocus
+                  className="w-full bg-transparent border-0 border-b border-border rounded-none focus-visible:ring-0 focus-visible:border-primary px-0 py-2 resize-none min-h-[96px] text-lg text-foreground/90 placeholder:text-muted-foreground/30 placeholder:italic"
+                />
+              </div>
+              <div className="space-y-3">
+                <button onClick={() => setStep(4)} disabled={!unsustainable.trim()} className={primaryBtn}>
+                  Continue
+                </button>
+                <button onClick={() => setStep(4)} className={skipBtn}>
+                  Skip for now
+                </button>
+              </div>
+            </motion.div>
+          )}
+
+          {step === 4 && (
+            <motion.div key="step4" {...stepAnim} className="space-y-10">
+              <div className="space-y-6">
+                <h2 className="font-serif text-3xl text-foreground">Before you begin</h2>
+                <div className="space-y-4 text-foreground/80 leading-relaxed">
+                  <p>
+                    Your entries stay on this device. Only the summary you choose to send reaches {coachFirstName}.
+                  </p>
+                  <p>
+                    This is a space for reflection between sessions, not a crisis service. If you ever feel unsafe or in real distress, please contact your GP, a local crisis line, or emergency services.
+                  </p>
+                </div>
+                <p className="font-serif italic text-lg text-muted-foreground">
+                  The practice is simple: when something presses on you, get it down while it is fresh.
+                </p>
+              </div>
+              <button onClick={() => onComplete(name.trim(), role.trim(), unsustainable.trim())} className={primaryBtn}>
+                Log your first moment
+              </button>
             </motion.div>
           )}
         </AnimatePresence>
@@ -323,41 +283,6 @@ function TestOnboardingScreen({ onComplete, onCoachAccess }: {
         >
           Coach access
         </button>
-      </div>
-    </div>
-  );
-}
-
-function EntryScreen({ onStart, onDemo, onCoachAccess }: { onStart: () => void, onDemo: (id: "alex" | "sam" | "maya") => void, onCoachAccess: () => void }) {
-  const [showDemos, setShowDemos] = useState(false);
-
-  return (
-    <div className="min-h-[100dvh] w-full flex flex-col items-center justify-center bg-background px-6">
-      <div className="max-w-md w-full text-center space-y-12">
-        <div className="space-y-4">
-          <h1 className="text-5xl md:text-6xl text-foreground">Calm Ambition</h1>
-          <p className="text-muted-foreground tracking-[0.25em] text-xs uppercase">Client tool</p>
-        </div>
-
-        {!showDemos ? (
-          <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-1000">
-            <p className="text-foreground/80 text-lg">Your coaching tool</p>
-            <div className="flex flex-col gap-4">
-              <button
-                onClick={onStart}
-                className="w-full bg-primary text-primary-foreground py-4 px-8 text-sm uppercase tracking-[0.18em] transition-opacity hover:opacity-90"
-              >
-                Open my tool
-              </button>
-            </div>
-            <button
-              onClick={onCoachAccess}
-              className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground/40 hover:text-muted-foreground transition-colors"
-            >
-              Coach access
-            </button>
-          </div>
-        ) : null}
       </div>
     </div>
   );
@@ -612,12 +537,6 @@ function HomeScreen({ coachName: coachNameProp, coachEmail, onLog, onPattern, on
 
       <button onClick={onLog} className={primaryBtn}>Log a moment</button>
 
-      {TESTING.enabled && logsSince >= 3 && (
-        <button onClick={onSend} className={ghostBtn}>
-          Ready to send your summary?
-        </button>
-      )}
-
       {(logsSince >= 3 || resetDue) && (
         <div className="space-y-3">
           {logsSince >= 3 && (
@@ -665,11 +584,11 @@ function LookBackHub({ onOpen }: { onOpen: (id: string) => void }) {
   );
 }
 
-function MainApp({ onNewClient, isCoachMode, coachName, coachEmail, safetyNote, onExitCoachMode, onOpenSettings }: { onNewClient: () => void; isCoachMode: boolean; coachName: string; coachEmail: string; safetyNote?: string; onExitCoachMode: () => void; onOpenSettings: () => void }) {
+function MainApp({ onNewClient, isCoachMode, coachName, coachEmail, safetyNote, onExitCoachMode, onOpenSettings, onCoachAccess, initialTab = "home" }: { onNewClient: () => void; isCoachMode: boolean; coachName: string; coachEmail: string; safetyNote?: string; onExitCoachMode: () => void; onOpenSettings: () => void; onCoachAccess: () => void; initialTab?: string }) {
   const { profile, clearProfile, lastSaved, exportAllData, importData } = useClientProfile();
   const importInputRef = useRef<HTMLInputElement>(null);
   const [showPreSession, setShowPreSession] = useState(false);
-  const [activeTab, setActiveTab] = useState("home");
+  const [activeTab, setActiveTab] = useState(initialTab);
   const [showSaved, setShowSaved] = useState(false);
 
   useEffect(() => {
@@ -796,14 +715,12 @@ function MainApp({ onNewClient, isCoachMode, coachName, coachEmail, safetyNote, 
                 </>
               ) : (
                 <>
-                  {TESTING.enabled && (
-                    <button
-                      onClick={exportAllData}
-                      className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground hover:text-foreground transition-colors whitespace-nowrap border border-border px-4 py-1.5 hover:border-foreground/30"
-                    >
-                      Export my data
-                    </button>
-                  )}
+                  <button
+                    onClick={exportAllData}
+                    className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground hover:text-foreground transition-colors whitespace-nowrap border border-border px-4 py-1.5 hover:border-foreground/30"
+                  >
+                    Export my data
+                  </button>
                   <button
                     onClick={() => setShowPreSession(true)}
                     className="text-[11px] uppercase tracking-[0.18em] text-primary border border-primary px-4 py-1.5 hover:opacity-80 transition-opacity whitespace-nowrap"
@@ -850,6 +767,12 @@ function MainApp({ onNewClient, isCoachMode, coachName, coachEmail, safetyNote, 
           <p className="text-xs text-muted-foreground/50 leading-relaxed">
             {safetyNote?.trim() || "This is a space for reflection between sessions, not a crisis service. If you ever feel unsafe or in real distress, please contact your GP, a local crisis line, or emergency services."}
           </p>
+          <button
+            onClick={onCoachAccess}
+            className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground/30 hover:text-muted-foreground transition-colors pt-2"
+          >
+            Coach access
+          </button>
         </footer>
       )}
     </div>
@@ -1260,6 +1183,7 @@ function DailyTab({ onNext }: { onNext: () => void }) {
           <Textarea
             value={form.moment}
             onChange={(e) => setForm(prev => ({ ...prev, moment: e.target.value }))}
+            autoFocus
             placeholder="Just get it down. A sentence is enough."
             className="w-full bg-transparent border-0 border-b border-border rounded-none focus-visible:ring-0 focus-visible:border-primary px-0 py-2 resize-none min-h-[96px] text-lg text-foreground/90 placeholder:text-muted-foreground/30 placeholder:italic"
           />
@@ -2091,7 +2015,7 @@ function buildReportText(profile: import("./hooks/use-client-profile").ClientPro
   const prep = profile.nextSessionPrep;
 
   const lines: string[] = [];
-  lines.push(`PRE-SESSION NOTES — ${clientName.toUpperCase()}`);
+  lines.push(`PRE-SESSION NOTES: ${clientName.toUpperCase()}`);
   lines.push(`Session: ${sessionDateDisplay}`);
   lines.push("");
 
@@ -2153,8 +2077,6 @@ function buildReportText(profile: import("./hooks/use-client-profile").ClientPro
 function PreSessionModal({ coachEmail, onClose }: { coachEmail: string; onClose: () => void }) {
   const { profile } = useClientProfile();
   const [copied, setCopied] = useState(false);
-  const [phase, setPhase] = useState<"summary" | "feedback">("summary");
-  const [feedback, setFeedback] = useState({ q1: "", q2: "", q3: "", q4: "" });
   if (!profile) return null;
 
   const clientName = profile.intake.name || "Client";
@@ -2187,85 +2109,10 @@ function PreSessionModal({ coachEmail, onClose }: { coachEmail: string; onClose:
   };
 
   const handleEmail = () => {
-    const subject = encodeURIComponent(`Pre-session notes — ${clientName} — ${sessionDateDisplay}`);
+    const subject = encodeURIComponent(`Pre-session notes: ${clientName}, ${sessionDateDisplay}`);
     const body = encodeURIComponent(reportText);
     window.location.href = `mailto:${coachEmail}?subject=${subject}&body=${body}`;
-    if (TESTING.enabled) setPhase("feedback");
   };
-
-  const handleFeedbackSend = () => {
-    const lines = [
-      `Feedback from: ${profile.intake.name || "tester"}`,
-      "",
-      "1. Did you know what to do without being told?",
-      feedback.q1 || "(no answer)",
-      "",
-      "2. Was logging quick enough that you'd actually do it in the moment?",
-      feedback.q2 || "(no answer)",
-      "",
-      "3. Did anything feel confusing or make you hesitate?",
-      feedback.q3 || "(no answer)",
-      "",
-      "4. Did the summary look right when you sent it?",
-      feedback.q4 || "(no answer)",
-    ].join("\n");
-    const subject = encodeURIComponent(`App feedback — ${profile.intake.name || "tester"}`);
-    const body = encodeURIComponent(lines);
-    window.location.href = `mailto:${coachEmail}?subject=${subject}&body=${body}`;
-    onClose();
-  };
-
-  if (TESTING.enabled && phase === "feedback") {
-    const questions = [
-      { key: "q1" as const, label: "Did you know what to do without being told?" },
-      { key: "q2" as const, label: "Was logging quick enough that you'd actually do it in the moment?" },
-      { key: "q3" as const, label: "Did anything feel confusing or make you hesitate?" },
-      { key: "q4" as const, label: "Did the summary look right when you sent it?" },
-    ];
-    return (
-      <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur overflow-y-auto">
-        <div className="min-h-full flex flex-col items-start justify-start py-12 px-4">
-          <div className="bg-background border border-border max-w-2xl w-full mx-auto">
-            <div className="p-8 border-b border-border flex items-start justify-between gap-8">
-              <div className="space-y-1">
-                <p className="text-xs uppercase tracking-[0.25em] text-muted-foreground">Your summary is on its way</p>
-                <h2 className="text-2xl font-serif">One more thing</h2>
-                <p className="text-sm text-muted-foreground">Four quick questions while the experience is fresh. Takes under a minute.</p>
-              </div>
-              <button onClick={onClose} className="text-muted-foreground/50 hover:text-foreground text-xl leading-none mt-1">×</button>
-            </div>
-            <div className="p-8 space-y-10">
-              {questions.map(({ key, label }) => (
-                <div key={key} className="space-y-3">
-                  <label className="block text-sm uppercase tracking-[0.18em] text-foreground">{label}</label>
-                  <Textarea
-                    value={feedback[key]}
-                    onChange={e => setFeedback(prev => ({ ...prev, [key]: e.target.value }))}
-                    placeholder="Your answer"
-                    className="w-full bg-transparent border-0 border-b border-border rounded-none focus-visible:ring-0 focus-visible:border-primary px-0 py-2 resize-none min-h-[60px] text-base text-foreground/90 placeholder:text-muted-foreground/30 placeholder:italic"
-                  />
-                </div>
-              ))}
-            </div>
-            <div className="p-8 border-t border-border flex flex-wrap items-center gap-4">
-              <button
-                onClick={onClose}
-                className="px-6 py-3 border border-border text-sm uppercase tracking-[0.18em] text-muted-foreground hover:border-foreground/30 transition-colors"
-              >
-                Skip
-              </button>
-              <button
-                onClick={handleFeedbackSend}
-                className="flex-1 min-w-[160px] px-6 py-3 bg-primary text-primary-foreground text-sm uppercase tracking-[0.18em] hover:opacity-90"
-              >
-                Send feedback
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur overflow-y-auto">
@@ -2314,7 +2161,7 @@ function PreSessionModal({ coachEmail, onClose }: { coachEmail: string; onClose:
                 {recentLogs.length > 0 && (
                   <div className="space-y-6 pt-6 border-t border-border">
                     <p className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
-                      Daily logs — {recentLogs.length} {recentLogs.length === 1 ? "entry" : "entries"}
+                      Daily logs: {recentLogs.length} {recentLogs.length === 1 ? "entry" : "entries"}
                     </p>
                     {recentLogs.map(log => (
                       <div key={log.id} className="space-y-2 bg-card p-4 border border-card-border">
@@ -2480,38 +2327,44 @@ export default function App() {
   const { settings, isLoading: settingsLoading, isCoachMode, saveSettings, enterCoachMode, exitCoachMode } = useAppSettings();
   const [showPinDialog, setShowPinDialog] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  // Set when a client finishes onboarding, so they land on their first log.
+  const [justOnboarded, setJustOnboarded] = useState(false);
 
-  // Test mode: skip first-time coach setup by seeding default settings.
+  // This portal is deployed for one coach: seed her details on first open
+  // so clients go straight to onboarding. The PIN is created on-device.
   useEffect(() => {
-    if (!settingsLoading && !settings && TESTING.enabled) {
-      saveSettings({ coachName: TESTING.coachName, coachEmail: TESTING.coachEmail, coachPin: TESTING.coachPin });
+    if (!settingsLoading && !settings) {
+      saveSettings({ coachName: COACH.name, coachEmail: COACH.email, coachPin: "" });
     }
   }, [settingsLoading, settings, saveSettings]);
 
-  if (profileLoading || settingsLoading) return null;
-
-  if (!settings) {
-    if (TESTING.enabled) return null; // settings are being seeded; re-render follows
-    return (
-      <TooltipProvider>
-        <SetupScreen onComplete={saveSettings} />
-        <Toaster />
-      </TooltipProvider>
-    );
-  }
+  if (profileLoading || settingsLoading || !settings) return null;
 
   const handleCoachAccess = () => setShowPinDialog(true);
   const handlePinSuccess = () => {
     enterCoachMode(settings.coachPin, settings);
     setShowPinDialog(false);
   };
+  const handleCreatePin = (pin: string) => {
+    const updated = { ...settings, coachPin: pin };
+    saveSettings(updated);
+    enterCoachMode(pin, updated);
+    setShowPinDialog(false);
+  };
+
+  const pinDialog = showPinDialog && (
+    <CoachPinDialog
+      settings={settings}
+      onSuccess={handlePinSuccess}
+      onCreatePin={handleCreatePin}
+      onCancel={() => setShowPinDialog(false)}
+    />
+  );
 
   if (!profile && clients.length > 0) {
     return (
       <TooltipProvider>
-        {showPinDialog && (
-          <CoachPinDialog settings={settings} onSuccess={handlePinSuccess} onCancel={() => setShowPinDialog(false)} />
-        )}
+        {pinDialog}
         <ClientPicker
           onCoachAccess={handleCoachAccess}
           clients={clients}
@@ -2527,13 +2380,15 @@ export default function App() {
   if (!profile) {
     return (
       <TooltipProvider>
-        {showPinDialog && (
-          <CoachPinDialog settings={settings} onSuccess={handlePinSuccess} onCancel={() => setShowPinDialog(false)} />
-        )}
-        {TESTING.enabled
-          ? <TestOnboardingScreen onComplete={(name, behaviour) => createClient(name, "", behaviour)} onCoachAccess={handleCoachAccess} />
-          : <EntryScreen onStart={() => createClient()} onDemo={loadDemo} onCoachAccess={handleCoachAccess} />
-        }
+        {pinDialog}
+        <ClientOnboarding
+          coachFirstName={settings.coachName.trim().split(/\s+/)[0] || "your coach"}
+          onComplete={(name, role, unsustainable) => {
+            createClient(name, role, { unsustainable });
+            setJustOnboarded(true);
+          }}
+          onCoachAccess={handleCoachAccess}
+        />
         <Toaster />
       </TooltipProvider>
     );
@@ -2541,9 +2396,7 @@ export default function App() {
 
   return (
     <TooltipProvider>
-      {showPinDialog && (
-        <CoachPinDialog settings={settings} onSuccess={handlePinSuccess} onCancel={() => setShowPinDialog(false)} />
-      )}
+      {pinDialog}
       {showSettings && (
         <SettingsDialog settings={settings} onSave={saveSettings} onClose={() => setShowSettings(false)} />
       )}
@@ -2555,6 +2408,8 @@ export default function App() {
         safetyNote={settings.safetyNote}
         onExitCoachMode={exitCoachMode}
         onOpenSettings={() => setShowSettings(true)}
+        onCoachAccess={handleCoachAccess}
+        initialTab={justOnboarded ? "daily" : "home"}
       />
       <Toaster />
     </TooltipProvider>
