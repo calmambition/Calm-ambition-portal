@@ -1,3 +1,4 @@
+import { LOCALE } from "../config";
 import { ClientProfile } from "../hooks/use-client-profile";
 
 interface Props {
@@ -14,7 +15,7 @@ function Section({ label, children }: { label: string; children: React.ReactNode
 }
 
 export function PrintHistory({ profile }: Props) {
-  const today = new Date().toLocaleDateString("en-AU", {
+  const today = new Date().toLocaleDateString(LOCALE, {
     day: "numeric",
     month: "long",
     year: "numeric",
@@ -53,12 +54,12 @@ export function PrintHistory({ profile }: Props) {
         chronological.map((session, i) => {
           const sessionNum = i + 1;
           const displayDate = session.sessionDate
-            ? new Date(session.sessionDate + "T12:00:00").toLocaleDateString("en-AU", {
+            ? new Date(session.sessionDate + "T12:00:00").toLocaleDateString(LOCALE, {
                 day: "numeric",
                 month: "long",
                 year: "numeric",
               })
-            : new Date(session.archivedAt).toLocaleDateString("en-AU", {
+            : new Date(session.archivedAt).toLocaleDateString(LOCALE, {
                 day: "numeric",
                 month: "long",
                 year: "numeric",

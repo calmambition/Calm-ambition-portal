@@ -14,3 +14,7 @@ export const COACH = {
   name: "Priyanka Jain",
   email: "thecalmcoach.pri@gmail.com",
 };
+
+// One locale for every visible date, so a single screen never mixes
+// "Friday 12 June" with "Friday, June 12".
+export const LOCALE = "en-AU";

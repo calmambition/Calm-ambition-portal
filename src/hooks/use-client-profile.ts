@@ -26,6 +26,9 @@ export interface ClientProfile {
   sessionAnchor: {
     coachNoteDate: string;
     sessionDate: string;
+    // Set by the coach. When present the client countdown uses it;
+    // older profiles without it fall back to last session + 14 days.
+    nextSessionDate?: string;
     weeklyOpeningLine: string;
     whatWeNamed: string;
     whereWeStart: "Surface" | "Stabilise" | "Sustain" | "";
@@ -82,6 +85,8 @@ export interface ClientProfile {
     anythingElse: string;
   };
   supervisionNotes: string;
+  // One-time backup reminder, shown after enough logs accumulate.
+  backupNudgeDismissed?: boolean;
   sessionHistory: Array<{
     id: string;
     archivedAt: string;
@@ -113,6 +118,7 @@ const defaultProfile: ClientProfile = {
   sessionAnchor: {
     coachNoteDate: "",
     sessionDate: "",
+    nextSessionDate: "",
     weeklyOpeningLine: "",
     whatWeNamed: "",
     whereWeStart: "",
@@ -558,6 +564,7 @@ export function useClientProfile() {
         sessionAnchor: {
           coachNoteDate: new Date().toISOString(),
           sessionDate: "",
+          nextSessionDate: "",
           weeklyOpeningLine: "",
           whatWeNamed: "",
           whereWeStart: "" as const,

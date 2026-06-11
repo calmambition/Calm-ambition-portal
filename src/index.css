@@ -336,3 +336,9 @@
     text-align: center;
   }
 }
+
+/* Visible focus for keyboard users only; taps and clicks stay clean. */
+:focus-visible {
+  outline: 1px solid var(--color-primary);
+  outline-offset: 2px;
+}

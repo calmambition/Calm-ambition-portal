@@ -5,8 +5,20 @@ const SETTINGS_KEY = 'calm-ambition-settings';
 export interface AppSettings {
   coachName: string;
   coachEmail: string;
-  coachPin: string;
+  // SHA-256 hex digest of the coach PIN. Empty until a PIN is created
+  // on this device. The PIN itself is never stored.
+  coachPinHash: string;
   safetyNote?: string;
+}
+
+export async function hashPin(pin: string): Promise<string> {
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(pin));
+  return [...new Uint8Array(digest)].map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+export async function verifyPin(pin: string, pinHash: string): Promise<boolean> {
+  if (!pinHash) return false;
+  return (await hashPin(pin)) === pinHash;
 }
 
 export function useAppSettings() {
@@ -15,13 +27,27 @@ export function useAppSettings() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const raw = localStorage.getItem(SETTINGS_KEY);
-    if (raw) {
-      try {
-        setSettings(JSON.parse(raw));
-      } catch {}
-    }
-    setIsLoading(false);
+    (async () => {
+      const raw = localStorage.getItem(SETTINGS_KEY);
+      if (raw) {
+        try {
+          const parsed = JSON.parse(raw);
+          if (parsed && typeof parsed.coachPin === 'string') {
+            // Migrate older settings that stored the PIN in plain text.
+            const { coachPin, ...rest } = parsed;
+            const migrated: AppSettings = {
+              ...rest,
+              coachPinHash: coachPin ? await hashPin(coachPin) : '',
+            };
+            localStorage.setItem(SETTINGS_KEY, JSON.stringify(migrated));
+            setSettings(migrated);
+          } else if (parsed) {
+            setSettings(parsed);
+          }
+        } catch { /* corrupt settings fall through to first-run seeding */ }
+      }
+      setIsLoading(false);
+    })();
   }, []);
 
   const saveSettings = useCallback((s: AppSettings) => {
@@ -29,13 +55,9 @@ export function useAppSettings() {
     setSettings(s);
   }, []);
 
-  const enterCoachMode = useCallback((pin: string, currentSettings: AppSettings | null): boolean => {
-    if (!currentSettings) return false;
-    if (pin === currentSettings.coachPin) {
-      setIsCoachMode(true);
-      return true;
-    }
-    return false;
+  // PIN verification happens in the dialog (it is async); this just flips the mode.
+  const enterCoachMode = useCallback(() => {
+    setIsCoachMode(true);
   }, []);
 
   const exitCoachMode = useCallback(() => {

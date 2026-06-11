@@ -1,3 +1,4 @@
+import { LOCALE } from "../config";
 import { ClientProfile } from "../hooks/use-client-profile";
 
 interface PrintExportProps {
@@ -23,7 +24,7 @@ function Block({ heading, children }: { heading: string; children: React.ReactNo
 }
 
 export function PrintExport({ profile }: PrintExportProps) {
-  const today = new Date().toLocaleDateString("en-AU", {
+  const today = new Date().toLocaleDateString(LOCALE, {
     day: "numeric",
     month: "long",
     year: "numeric",
@@ -255,7 +256,7 @@ export function PrintExport({ profile }: PrintExportProps) {
             {recentLogs.map((log) => (
               <div key={log.id} className="print-log-entry">
                 <p className="print-log-date">
-                  {new Date(log.date).toLocaleDateString("en-AU", {
+                  {new Date(log.date).toLocaleDateString(LOCALE, {
                     weekday: "long",
                     day: "numeric",
                     month: "long",
@@ -300,7 +301,7 @@ export function PrintExport({ profile }: PrintExportProps) {
               <div key={reset.id} className="print-log-entry">
                 <p className="print-log-date">
                   Week of{" "}
-                  {new Date(reset.weekOf).toLocaleDateString("en-AU", {
+                  {new Date(reset.weekOf).toLocaleDateString(LOCALE, {
                     day: "numeric",
                     month: "long",
                   })}
@@ -345,12 +346,12 @@ export function PrintExport({ profile }: PrintExportProps) {
                 <p className="print-log-date">
                   Session {profile.sessionHistory.length - index} &nbsp;&middot;&nbsp;{" "}
                   {session.sessionDate
-                    ? new Date(session.sessionDate + "T12:00:00").toLocaleDateString("en-AU", {
+                    ? new Date(session.sessionDate + "T12:00:00").toLocaleDateString(LOCALE, {
                         day: "numeric",
                         month: "long",
                         year: "numeric",
                       })
-                    : new Date(session.archivedAt).toLocaleDateString("en-AU", {
+                    : new Date(session.archivedAt).toLocaleDateString(LOCALE, {
                         day: "numeric",
                         month: "long",
                         year: "numeric",
@@ -432,7 +433,7 @@ export function PrintExport({ profile }: PrintExportProps) {
             {profile.coachCheckIns.map((entry) => (
               <div key={entry.id} className="print-log-entry">
                 <p className="print-log-date">
-                  {new Date(entry.date).toLocaleDateString("en-AU", {
+                  {new Date(entry.date).toLocaleDateString(LOCALE, {
                     weekday: "long",
                     day: "numeric",
                     month: "long",
