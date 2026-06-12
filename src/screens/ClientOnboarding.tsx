@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Textarea } from "@/components/ui/textarea";
+import { MaisonLogo } from "@/components/MaisonLogo";
 
 export function ClientOnboarding({ onComplete, onCoachAccess, coachFirstName }: {
   onComplete: (name: string, role: string, unsustainable: string) => void;
@@ -26,8 +27,8 @@ export function ClientOnboarding({ onComplete, onCoachAccess, coachFirstName }: 
   return (
     <div className="min-h-[100dvh] w-full flex flex-col items-center justify-center bg-background px-6 py-12">
       <div className="max-w-md w-full space-y-12">
-        <div className="space-y-4 text-center">
-          <h1 className="text-5xl text-foreground">Calm Ambition</h1>
+        <div className="space-y-6 text-center">
+          <MaisonLogo scale={1.2} />
           <p className="text-muted-foreground tracking-[0.25em] text-xs uppercase">Step {step} of 4</p>
         </div>
 

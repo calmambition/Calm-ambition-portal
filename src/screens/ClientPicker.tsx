@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { MaisonLogo } from "@/components/MaisonLogo";
 
 export function ClientPicker({ onCoachAccess, clients, onSwitch, onNew, onDemo, isCoachMode }: {
   onCoachAccess: () => void;
@@ -13,8 +14,8 @@ export function ClientPicker({ onCoachAccess, clients, onSwitch, onNew, onDemo, 
   return (
     <div className="min-h-[100dvh] w-full flex flex-col items-center justify-center bg-background px-6">
       <div className="max-w-md w-full space-y-12">
-        <div className="text-center space-y-4">
-          <h1 className="text-5xl md:text-6xl text-foreground">Calm Ambition</h1>
+        <div className="text-center space-y-6">
+          <MaisonLogo scale={1.2} />
           <p className="text-muted-foreground tracking-[0.25em] text-xs uppercase">Choose a client</p>
         </div>
 

@@ -11,6 +11,7 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { ClientSwitcher } from "../components/ClientSwitcher";
+import { MaisonCompact } from "../components/MaisonLogo";
 import { PreSessionModal } from "../components/dialogs";
 import { HomeScreen, LookBackHub } from "./HomeScreen";
 import {
@@ -87,6 +88,10 @@ export function MainApp({ onNewClient, isCoachMode, coachName, coachEmail, safet
         )}
         <div className="px-4 overflow-x-auto no-scrollbar">
           <div className="flex items-center justify-between min-w-max w-full px-2 py-4 gap-12">
+            <div className="flex items-center gap-8">
+            <div className="hidden sm:flex items-center pr-8 border-r border-border">
+              <MaisonCompact size={13} />
+            </div>
             <div className="flex space-x-8">
               {tabs.map(tab => (
                 <button
@@ -98,6 +103,7 @@ export function MainApp({ onNewClient, isCoachMode, coachName, coachEmail, safet
                   <span className={`pb-1 border-b ${isActive(tab.id) ? 'border-primary' : 'border-transparent'}`}>{tab.label}</span>
                 </button>
               ))}
+            </div>
             </div>
             <div className="flex items-center gap-3">
               <AnimatePresence>
