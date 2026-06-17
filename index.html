@@ -11,7 +11,17 @@
     <meta property="og:type" content="website" />
     <meta property="og:image" content="https://calmambition.github.io/Calm-ambition-portal/opengraph.jpg" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="theme-color" content="#FAF8F4" />
+    <meta name="theme-color" content="#FAF8F4" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#1E2820" media="(prefers-color-scheme: dark)" />
+    <script>
+      // Track the device colour scheme. Runs before paint, so no flash.
+      (function () {
+        var mq = window.matchMedia('(prefers-color-scheme: dark)');
+        var apply = function () { document.documentElement.classList.toggle('dark', mq.matches); };
+        apply();
+        mq.addEventListener('change', apply);
+      })();
+    </script>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />

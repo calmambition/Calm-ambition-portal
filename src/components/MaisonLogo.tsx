@@ -16,10 +16,16 @@ const CA_COLORS = {
   goldLight: '#D8C49A',
 };
 
+// The on-light defaults read from theme tokens so the wordmark flips to
+// cream/gold-light automatically in dark mode. The `reverse` prop keeps its
+// literals for marks that sit on a fixed dark surface (e.g. the avatar).
+const THEME_INK = 'var(--logo-ink)';
+const THEME_ACCENT = 'var(--logo-accent)';
+
 // Full ceremonial lockup: hairline / CALM AMBITION / hairline
 export function MaisonLogo({ reverse = false, scale = 1 }: { reverse?: boolean; scale?: number }) {
-  const ink = reverse ? CA_COLORS.inkReverse : CA_COLORS.ink;
-  const acc = reverse ? CA_COLORS.goldLight : CA_COLORS.gold;
+  const ink = reverse ? CA_COLORS.inkReverse : THEME_INK;
+  const acc = reverse ? CA_COLORS.goldLight : THEME_ACCENT;
   return (
     <span style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'center', gap: 16 * scale }}>
       <span style={{ width: 150 * scale, height: 1, background: acc }}></span>
@@ -39,15 +45,15 @@ export function MaisonCompact({ reverse = false, size = 17 }: { reverse?: boolea
     <span style={{
       fontFamily: "'Cormorant Garamond', serif", fontWeight: 500, fontSize: size,
       letterSpacing: '0.26em', marginRight: '-0.26em', textTransform: 'uppercase',
-      lineHeight: 1, color: reverse ? CA_COLORS.inkReverse : CA_COLORS.ink, whiteSpace: 'nowrap',
+      lineHeight: 1, color: reverse ? CA_COLORS.inkReverse : THEME_INK, whiteSpace: 'nowrap',
     }}>Calm Ambition</span>
   );
 }
 
 // CA between hairlines — avatars and small marks
 export function MaisonMonogram({ reverse = false, size = 40 }: { reverse?: boolean; size?: number }) {
-  const ink = reverse ? CA_COLORS.inkReverse : CA_COLORS.ink;
-  const acc = reverse ? CA_COLORS.goldLight : CA_COLORS.gold;
+  const ink = reverse ? CA_COLORS.inkReverse : THEME_INK;
+  const acc = reverse ? CA_COLORS.goldLight : THEME_ACCENT;
   return (
     <span style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'center', gap: size * 0.075 }}>
       <span style={{ width: size * 0.36, height: 1, background: acc }}></span>
@@ -74,8 +80,8 @@ export function MaisonAvatar({ size = 40 }: { size?: number }) {
 
 // The seal — reserved for certificates, welcome documents, completion moments
 export function MaisonSeal({ reverse = false, size = 110 }: { reverse?: boolean; size?: number }) {
-  const fg = reverse ? CA_COLORS.inkReverse : CA_COLORS.ink;
-  const accent = reverse ? CA_COLORS.goldLight : CA_COLORS.gold;
+  const fg = reverse ? CA_COLORS.inkReverse : THEME_INK;
+  const accent = reverse ? CA_COLORS.goldLight : THEME_ACCENT;
   return (
     <svg width={size} height={size} viewBox="0 0 120 120" fill="none" aria-label="Calm Ambition seal">
       <rect x="24" y="24" width="72" height="72" stroke={fg} strokeWidth="1"></rect>

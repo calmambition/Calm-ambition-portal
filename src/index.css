@@ -93,30 +93,47 @@
   --ring: 120 14% 42%;
   
   --radius: 0rem; /* No rounded corners for elegant feel */
+
+  /* Maison wordmark colours — overridden in dark mode below. */
+  --logo-ink: #1E2820;     /* Dark Forest */
+  --logo-accent: #A98E5F;  /* Gold */
 }
 
+/* Real dark theme, Brand Kit 2026. A head script toggles .dark from the
+   device setting; components read these tokens, so they flip automatically. */
 .dark {
-  --background: 40 33% 97%;
-  --foreground: 130 14% 14%;
-  --card: 37 38% 94%;
-  --card-foreground: 130 14% 14%;
-  --card-border: 35 15% 85%;
-  --popover: 37 38% 94%;
-  --popover-foreground: 130 14% 14%;
-  --popover-border: 35 15% 85%;
-  --primary: 120 14% 42%;
-  --primary-foreground: 37 38% 94%;
-  --secondary: 104 22% 87%;
-  --secondary-foreground: 130 14% 14%;
-  --muted: 35 15% 90%;
-  --muted-foreground: 130 14% 22%;
-  --accent: 120 14% 42%;
-  --accent-foreground: 37 38% 94%;
-  --destructive: 18 40% 55%;
-  --destructive-foreground: 40 33% 97%;
-  --border: 35 15% 85%;
-  --input: 35 15% 85%;
-  --ring: 120 14% 42%;
+    --background: 130 14% 14%;        /* #1E2820 Dark Forest */
+    --foreground: 37 38% 94%;         /* #F5F0E8 Cream */
+
+    --card: 128 14% 21%;              /* #2E3D30 Charcoal */
+    --card-foreground: 37 38% 94%;
+    --card-border: 128 12% 27%;       /* ~#3A4A3C */
+
+    --popover: 128 14% 21%;
+    --popover-foreground: 37 38% 94%;
+    --popover-border: 128 12% 27%;
+
+    --primary: 111 21% 76%;           /* #B8CEB4 Sage Light — brighter for contrast on dark */
+    --primary-foreground: 130 14% 14%;/* Dark Forest text on the sage button */
+
+    --secondary: 128 12% 30%;         /* sand chip, deepened for dark */
+    --secondary-foreground: 37 38% 94%;
+
+    --muted: 128 12% 24%;
+    --muted-foreground: 100 12% 66%;  /* Stone, lifted for legibility */
+
+    --accent: 111 21% 76%;
+    --accent-foreground: 130 14% 14%;
+
+    --destructive: 18 48% 62%;        /* Terracotta, lifted for legibility on dark */
+    --destructive-foreground: 130 14% 14%;
+
+    --border: 128 12% 27%;
+    --input: 128 12% 27%;
+    --ring: 111 21% 76%;
+
+    --logo-ink: #F5F0E8;     /* Cream wordmark */
+    --logo-accent: #D8C49A;  /* Gold Light */
 }
 
 @layer base {
