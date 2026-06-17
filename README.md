@@ -24,15 +24,11 @@ npm run build
 npx vite preview --base /Calm-ambition-portal/
 ```
 
-## Test mode
+## Coach setup
 
-`src/config.ts` has a `TESTING` flag. While `enabled` is `true`:
+There is no test-mode flag. The coach identity is seeded from `COACH` in `src/config.ts`, and the coach PIN is created on each device the first time coach access is used (change it later in Settings). Clients can always export their own data from the header.
 
-- coach first-time setup is skipped (defaults seeded)
-- new clients get a seeded session date so the countdown home appears
-- clients can export their own data
-
-**Before real launch, set `TESTING.enabled` to `false`.** Real coaches then go through proper setup with their own email and PIN.
+To explore the app with sample clients, open the client picker and choose the demo data (Alex, Sam, Maya).
 
 ## Notes
 
