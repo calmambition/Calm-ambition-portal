@@ -36,8 +36,9 @@ export function ClientOnboarding({ onComplete, onCoachAccess, coachFirstName }: 
           {step === 1 && (
             <motion.div key="step1" {...stepAnim} className="space-y-10">
               <div className="space-y-4">
-                <label className="block text-sm uppercase tracking-[0.18em] text-foreground">Your name</label>
+                <label htmlFor="onb-name" className="block text-sm uppercase tracking-[0.18em] text-foreground">Your name</label>
                 <input
+                  id="onb-name"
                   type="text"
                   value={name}
                   onChange={e => setName(e.target.value)}
@@ -56,9 +57,10 @@ export function ClientOnboarding({ onComplete, onCoachAccess, coachFirstName }: 
           {step === 2 && (
             <motion.div key="step2" {...stepAnim} className="space-y-10">
               <div className="space-y-4">
-                <label className="block text-sm uppercase tracking-[0.18em] text-foreground">Your role</label>
+                <label htmlFor="onb-role" className="block text-sm uppercase tracking-[0.18em] text-foreground">Your role</label>
                 <p className="text-sm text-muted-foreground">So {coachFirstName} can see your week in context.</p>
                 <input
+                  id="onb-role"
                   type="text"
                   value={role}
                   onChange={e => setRole(e.target.value)}
@@ -82,9 +84,10 @@ export function ClientOnboarding({ onComplete, onCoachAccess, coachFirstName }: 
           {step === 3 && (
             <motion.div key="step3" {...stepAnim} className="space-y-10">
               <div className="space-y-4">
-                <label className="block text-sm uppercase tracking-[0.18em] text-foreground">What feels unsustainable right now?</label>
+                <label htmlFor="onb-unsustainable" className="block text-sm uppercase tracking-[0.18em] text-foreground">What feels unsustainable right now?</label>
                 <p className="text-sm text-muted-foreground">A sentence or two. You will go deeper with {coachFirstName} in session.</p>
                 <Textarea
+                  id="onb-unsustainable"
                   value={unsustainable}
                   onChange={e => setUnsustainable(e.target.value)}
                   placeholder="The pace, the load, the way the days end..."

@@ -28,13 +28,16 @@ export function MaisonLogo({ reverse = false, scale = 1 }: { reverse?: boolean; 
   const acc = reverse ? CA_COLORS.goldLight : THEME_ACCENT;
   return (
     <span style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'center', gap: 16 * scale }}>
-      <span style={{ width: 150 * scale, height: 1, background: acc }}></span>
+      <span style={{ width: 150 * scale, height: 1, maxWidth: '100%', background: acc }}></span>
       <span style={{
-        fontFamily: "'Cormorant Garamond', serif", fontWeight: 500, fontSize: 30 * scale,
+        fontFamily: "'Cormorant Garamond', serif", fontWeight: 500,
+        // Responsive so the wide tracking can't overflow narrow phones; the vw
+        // term only bites below ~600px, so desktop stays at the 30*scale ceiling.
+        fontSize: `clamp(${17 * scale}px, ${5 * scale}vw, ${30 * scale}px)`,
         letterSpacing: '0.34em', marginRight: '-0.34em', textTransform: 'uppercase',
         lineHeight: 1, color: ink, whiteSpace: 'nowrap',
       }}>Calm Ambition</span>
-      <span style={{ width: 150 * scale, height: 1, background: acc }}></span>
+      <span style={{ width: 150 * scale, height: 1, maxWidth: '100%', background: acc }}></span>
     </span>
   );
 }
