@@ -16,7 +16,7 @@ function IntensityScale({ value, onChange }: { value: number | null | undefined;
         {(value ?? null) !== null && (
           <button
             onClick={() => onChange(null)}
-            className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground/50 hover:text-muted-foreground transition-colors"
+            className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground/50 hover:text-muted-foreground transition-colors py-2 -my-2"
           >
             Clear
           </button>
@@ -29,7 +29,7 @@ function IntensityScale({ value, onChange }: { value: number | null | undefined;
             onClick={() => onChange(n)}
             aria-label={`${n} out of 10`}
             aria-pressed={value === n}
-            className={`h-10 flex items-center justify-center text-sm border transition-colors ${
+            className={`min-h-[44px] flex items-center justify-center text-sm tabular-nums border transition-colors ${
               value === n
                 ? "bg-primary text-primary-foreground border-primary"
                 : "border-border text-foreground/60 hover:border-foreground/30"

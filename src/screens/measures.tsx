@@ -139,10 +139,10 @@ export function DailyReadCard() {
   }
 
   return (
-    <div className="bg-card border border-card-border p-6 space-y-6">
+    <div className="bg-card border border-card-border p-6 space-y-6 animate-in fade-in slide-in-from-top-2 duration-300">
       <div className="flex items-baseline justify-between">
         <p className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground">Today's read, in three taps</p>
-        <button onClick={() => setOpen(false)} className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground/50 hover:text-muted-foreground">Done</button>
+        <button onClick={() => setOpen(false)} className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground/50 hover:text-muted-foreground py-2 -my-2">Done</button>
       </div>
       <div className="space-y-3">
         <label className="block text-foreground text-sm uppercase tracking-[0.18em]">Last night's sleep</label>
@@ -162,16 +162,10 @@ export function DailyReadCard() {
 
 // ── Measures tab: the burnout scale and the worklife check ──────────────────
 
-function daysSince(iso: string | undefined): number | null {
-  if (!iso) return null;
-  return Math.floor((Date.now() - new Date(iso + "T00:00:00").getTime()) / 86400000);
-}
-
 function CBICard() {
   const { profile, updateProfile } = useClientProfile();
   const latest = profile?.burnoutMeasures[0];
   const prior = profile?.burnoutMeasures[1];
-  const due = !latest || (daysSince(latest.date) ?? 99) >= 14;
   const [taking, setTaking] = useState(false);
   const [responses, setResponses] = useState<(number | null)[]>(Array(CBI_PB_ITEMS.length).fill(null));
   if (!profile) return null;
@@ -215,10 +209,10 @@ function CBICard() {
           onClick={() => setTaking(true)}
           className="px-6 py-3 bg-primary text-primary-foreground text-sm uppercase tracking-[0.18em] hover:opacity-90 transition-opacity"
         >
-          {latest ? (due ? "Take it again" : "Take it again early") : "Take the check"}
+          {latest ? "Take it again" : "Take the check"}
         </button>
       ) : (
-        <div className="space-y-8 pt-2">
+        <div className="space-y-8 pt-2 animate-in fade-in slide-in-from-top-2 duration-300">
           <p className="text-sm text-muted-foreground">Over the last few weeks…</p>
           {CBI_PB_ITEMS.map((q, i) => (
             <div key={i} className="space-y-3">
@@ -270,13 +264,19 @@ function WorklifeCard() {
       </div>
 
       {latest && !taking && (
-        <div className="grid grid-cols-2 gap-x-6 gap-y-3">
-          {WORKLIFE_DOMAINS.map(d => (
-            <div key={d.key} className="flex items-baseline justify-between border-b border-border/60 pb-1">
-              <span className="text-sm text-foreground/80">{d.label}</span>
-              <span className={`text-sm ${latest.responses[d.key] <= 2 ? "text-primary" : "text-muted-foreground"}`}>{latest.responses[d.key]}/5</span>
-            </div>
-          ))}
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-x-6 gap-y-3">
+            {WORKLIFE_DOMAINS.map(d => {
+              const strain = latest.responses[d.key] <= 2;
+              return (
+                <div key={d.key} className="flex items-baseline justify-between border-b border-border/60 pb-1">
+                  <span className={`text-sm ${strain ? "text-foreground" : "text-foreground/60"}`}>{d.label}</span>
+                  <span className={`text-sm tabular-nums ${strain ? "text-foreground font-medium" : "text-muted-foreground"}`}>{latest.responses[d.key]}/5</span>
+                </div>
+              );
+            })}
+          </div>
+          <p className="text-xs text-muted-foreground">The lower numbers are where the strain sits.</p>
         </div>
       )}
 
@@ -288,7 +288,7 @@ function WorklifeCard() {
           {latest ? "Update it" : "Map the six areas"}
         </button>
       ) : (
-        <div className="space-y-8 pt-2">
+        <div className="space-y-8 pt-2 animate-in fade-in slide-in-from-top-2 duration-300">
           {WORKLIFE_DOMAINS.map(d => (
             <div key={d.key} className="space-y-3">
               <p className="text-base text-foreground/90">{d.statement}</p>

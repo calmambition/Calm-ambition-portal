@@ -468,7 +468,7 @@ export function PreSessionModal({ coachEmail, coachName, onClose }: { coachEmail
 
           <div className="p-8 border-t border-border space-y-5">
             {sent ? (
-              <div className="space-y-3">
+              <div className="space-y-3 animate-in fade-in duration-500">
                 <p className="font-serif italic text-xl text-foreground/90">
                   Sent. {coachFirstName} has what she needs before you meet.
                 </p>
@@ -497,7 +497,7 @@ export function PreSessionModal({ coachEmail, coachName, onClose }: { coachEmail
                 </button>
 
                 {emailOpened && (
-                  <div className="bg-card border border-card-border px-5 py-4 space-y-3">
+                  <div className="bg-card border border-card-border px-5 py-4 space-y-3 animate-in fade-in slide-in-from-top-1 duration-300">
                     <p className="text-sm text-foreground/80 leading-relaxed">
                       {longReport
                         ? "Your notes are copied. In the email that just opened, tap the message, paste them in, and send."
