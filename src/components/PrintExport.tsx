@@ -1,5 +1,8 @@
 import { LOCALE } from "../config";
 import { ClientProfile } from "../hooks/use-client-profile";
+import { cbiBand, WORKLIFE_DOMAINS } from "../screens/measures";
+
+const DETACH_WORDS = ["—", "no", "somewhat", "fully"];
 
 interface PrintExportProps {
   profile: ClientProfile;
@@ -87,6 +90,11 @@ export function PrintExport({ profile }: PrintExportProps) {
     profile.direction.nonNegotiables.length > 0;
 
   const hasCheckIns = profile.coachCheckIns.length > 0;
+
+  const measures = profile.burnoutMeasures;
+  const worklife = profile.worklifeAreas[0];
+  const reads = profile.dailyReads.slice(0, 10);
+  const hasMeasures = measures.length > 0 || !!worklife || reads.length > 0;
 
   const hasSessionHistory = profile.sessionHistory.length > 0;
 
@@ -199,6 +207,37 @@ export function PrintExport({ profile }: PrintExportProps) {
         </>
       )}
 
+      {hasMeasures && (
+        <>
+          <div className="print-rule" />
+          <Block heading="Measures">
+            {measures.length > 0 && (
+              <Section label="Exhaustion — CBI personal burnout">
+                {measures.slice(0, 6).map((m) => (
+                  <p key={m.id}>
+                    {new Date(m.date + "T00:00:00").toLocaleDateString(LOCALE, { day: "numeric", month: "long", year: "numeric" })}: {m.score}/100 ({cbiBand(m.score)})
+                  </p>
+                ))}
+              </Section>
+            )}
+            {worklife && (
+              <Section label="Areas of worklife (1–5, lower means more strain)">
+                <p>{WORKLIFE_DOMAINS.map((d) => `${d.label} ${worklife.responses[d.key]}`).join("  ·  ")}</p>
+              </Section>
+            )}
+            {reads.length > 0 && (
+              <Section label="Recent daily reads">
+                {reads.map((r) => (
+                  <p key={r.date}>
+                    {new Date(r.date + "T00:00:00").toLocaleDateString(LOCALE, { day: "numeric", month: "long" })}: sleep {r.sleep ?? "—"}/5, energy {r.energy ?? "—"}/5, switched off {DETACH_WORDS[r.detached ?? 0]}
+                  </p>
+                ))}
+              </Section>
+            )}
+          </Block>
+        </>
+      )}
+
       {hasPattern && (
         <>
           <div className="print-rule" />
@@ -261,6 +300,7 @@ export function PrintExport({ profile }: PrintExportProps) {
                     day: "numeric",
                     month: "long",
                   })}
+                  {log.intensity != null && <> &nbsp;&middot;&nbsp; Weight {log.intensity}/10</>}
                 </p>
                 {log.moment && (
                   <Section label="The moment">

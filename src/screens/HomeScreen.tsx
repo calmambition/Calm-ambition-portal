@@ -1,5 +1,21 @@
 import { useClientProfile } from "../hooks/use-client-profile";
+import { downloadCheckInReminder } from "../lib/reminder";
 import { LOCALE } from "../config";
+
+// A quiet, one-time setup: adds a recurring check-in reminder to the client's
+// own calendar so returning to log doesn't depend on remembering to open the app.
+function ReminderLink() {
+  return (
+    <div className="text-center">
+      <button
+        onClick={downloadCheckInReminder}
+        className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground/60 hover:text-muted-foreground transition-colors py-2"
+      >
+        Add a gentle reminder to your calendar
+      </button>
+    </div>
+  );
+}
 
 export function BackupNudge() {
   const { profile, updateProfile, exportAllData } = useClientProfile();
@@ -29,12 +45,14 @@ export function BackupNudge() {
   );
 }
 
-export function HomeScreen({ coachName: coachNameProp, coachEmail, onLog, onPattern, onWeekly, onSend }: {
+export function HomeScreen({ coachName: coachNameProp, coachEmail, onLog, onPattern, onWeekly, onMeasures, onPrep, onSend }: {
   coachName: string;
   coachEmail: string;
   onLog: () => void;
   onPattern: () => void;
   onWeekly: () => void;
+  onMeasures: () => void;
+  onPrep: () => void;
   onSend: () => void;
 }) {
   const { profile } = useClientProfile();
@@ -75,6 +93,9 @@ export function HomeScreen({ coachName: coachNameProp, coachEmail, onLog, onPatt
   const mostRecentReset = profile.weeklyResets[0]?.weekOf;
   const resetDue = !mostRecentReset || (Date.now() - parseDate(mostRecentReset).getTime()) >= 7 * DAY_MS;
 
+  const lastMeasure = profile.burnoutMeasures[0]?.date;
+  const measureDue = !lastMeasure || (Date.now() - parseDate(lastMeasure).getTime()) >= 14 * DAY_MS;
+
   const inHandoff = daysUntil !== null && daysUntil <= 2;
   const dayLabel = (() => {
     if (!nextSession || daysUntil === null) return "";
@@ -97,6 +118,7 @@ export function HomeScreen({ coachName: coachNameProp, coachEmail, onLog, onPatt
           When something presses on you, capture it here. That is the whole practice.
         </p>
         <button onClick={onLog} className={primaryBtn}>Log a moment</button>
+        <ReminderLink />
       </div>
     );
   }
@@ -117,6 +139,7 @@ export function HomeScreen({ coachName: coachNameProp, coachEmail, onLog, onPatt
         </p>
         <div className="space-y-3">
           <button onClick={onSend} className={primaryBtn}>Send your summary to {coachFirstName}</button>
+          <button onClick={onPrep} className={ghostBtn}>Prepare for your session</button>
           <button onClick={onLog} className={ghostBtn}>Log one more moment</button>
         </div>
         <BackupNudge />
@@ -140,12 +163,18 @@ export function HomeScreen({ coachName: coachNameProp, coachEmail, onLog, onPatt
 
       <button onClick={onLog} className={primaryBtn}>Log a moment</button>
 
-      {(logsSince >= 3 || resetDue) && (
+      {(logsSince >= 3 || resetDue || measureDue) && (
         <div className="space-y-3">
           {logsSince >= 3 && (
             <button onClick={onPattern} className="w-full text-left border border-border bg-card px-5 py-4 hover:border-foreground/30 transition-colors">
               <span className="block text-[10px] uppercase tracking-[0.25em] text-muted-foreground mb-1.5">What is emerging</span>
               <span className="block text-base text-foreground/90">Something is taking shape across your recent entries.</span>
+            </button>
+          )}
+          {measureDue && (
+            <button onClick={onMeasures} className="w-full text-left border border-border px-5 py-4 hover:border-foreground/30 transition-colors">
+              <span className="block text-[10px] uppercase tracking-[0.25em] text-muted-foreground mb-1.5">A clearer read</span>
+              <span className="block text-base text-foreground/90">A short check-in on where things sit. A few minutes, no right answers.</span>
             </button>
           )}
           {resetDue && (
@@ -158,12 +187,15 @@ export function HomeScreen({ coachName: coachNameProp, coachEmail, onLog, onPatt
       )}
 
       <BackupNudge />
+      <ReminderLink />
     </div>
   );
 }
 
 export function LookBackHub({ onOpen }: { onOpen: (id: string) => void }) {
   const items = [
+    { id: "measures", title: "A clearer read", desc: "Short check-ins that track how you are over time." },
+    { id: "prep", title: "Before we meet", desc: "Gather what you want to bring to your next session." },
     { id: "pattern", title: "The pattern", desc: "What is emerging across your entries." },
     { id: "weekly", title: "Weekly reset", desc: "A short reflection on the week behind you." },
     { id: "experiment", title: "Your experiment", desc: "The one thing you are testing this cycle." },

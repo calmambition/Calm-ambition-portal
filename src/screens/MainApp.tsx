@@ -25,7 +25,9 @@ import {
   PatternTab,
   ResetTab,
   DirectionTab,
+  PrepTab,
 } from "./tabs";
+import { MeasuresTab } from "./measures";
 
 export function MainApp({ onNewClient, isCoachMode, coachName, coachEmail, safetyNote, onExitCoachMode, onOpenSettings, onCoachAccess, initialTab = "home" }: { onNewClient: () => void; isCoachMode: boolean; coachName: string; coachEmail: string; safetyNote?: string; onExitCoachMode: () => void; onOpenSettings: () => void; onCoachAccess: () => void; initialTab?: string }) {
   const { profile, clearProfile, lastSaved, exportAllData, importData } = useClientProfile();
@@ -50,6 +52,8 @@ export function MainApp({ onNewClient, isCoachMode, coachName, coachEmail, safet
     { id: "history", label: "History", coachOnly: true },
     { id: "checkins", label: "Between sessions", coachOnly: true },
     { id: "daily", label: "Daily log" },
+    { id: "measures", label: "Measures" },
+    { id: "prep", label: "Before we meet" },
     { id: "weekly", label: "Weekly reset" },
     { id: "experiment", label: "Experiment" },
     { id: "pattern", label: "Pattern" },
@@ -65,7 +69,7 @@ export function MainApp({ onNewClient, isCoachMode, coachName, coachEmail, safet
   const tabs = isCoachMode ? allTabs : clientNav;
 
   // "Look back" stays highlighted while the client is in any of its sub-views.
-  const lookbackIds = ["lookback", "weekly", "experiment", "pattern", "reset", "direction"];
+  const lookbackIds = ["lookback", "measures", "prep", "weekly", "experiment", "pattern", "reset", "direction"];
   const isActive = (id: string) => id === "lookback" ? lookbackIds.includes(activeTab) : activeTab === id;
 
   const handleExport = () => {
@@ -202,8 +206,10 @@ export function MainApp({ onNewClient, isCoachMode, coachName, coachEmail, safet
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.3 }}
           >
-            {activeTab === "home" && <HomeScreen coachName={coachName} coachEmail={coachEmail} onLog={() => setActiveTab("daily")} onPattern={() => setActiveTab("pattern")} onWeekly={() => setActiveTab("weekly")} onSend={() => setShowPreSession(true)} />}
+            {activeTab === "home" && <HomeScreen coachName={coachName} coachEmail={coachEmail} onLog={() => setActiveTab("daily")} onPattern={() => setActiveTab("pattern")} onWeekly={() => setActiveTab("weekly")} onMeasures={() => setActiveTab("measures")} onPrep={() => setActiveTab("prep")} onSend={() => setShowPreSession(true)} />}
             {activeTab === "lookback" && <LookBackHub onOpen={(id) => setActiveTab(id)} />}
+            {activeTab === "measures" && <MeasuresTab onNext={() => setActiveTab("daily")} />}
+            {activeTab === "prep" && <PrepTab onNext={() => setActiveTab("home")} />}
             {activeTab === "intake" && <IntakeTab onNext={() => setActiveTab("session")} onSkip={() => setActiveTab("daily")} />}
             {activeTab === "session" && <SessionTab onNext={() => setActiveTab("history")} onArchived={() => setActiveTab("history")} isCoachMode={isCoachMode} />}
             {activeTab === "history" && <SessionHistoryTab onNext={() => setActiveTab("checkins")} />}
