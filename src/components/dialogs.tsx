@@ -2,8 +2,22 @@ import { useState, useRef } from "react";
 import { AppSettings, hashPin, verifyPin } from "../hooks/use-app-settings";
 import { useClientProfile } from "../hooks/use-client-profile";
 import { LOCALE } from "../config";
+import { latestMeasure, cbiBand, lowWorklifeAreas, recentReads } from "../screens/measures";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+
+// Compact one-line summary of the recent daily reads for the coach report.
+function readsSummary(reads: { sleep: number | null; energy: number | null; detached: number | null }[]): string {
+  const mean = (vals: number[]) => vals.length ? (vals.reduce((a, b) => a + b, 0) / vals.length) : null;
+  const sleep = mean(reads.map(r => r.sleep).filter((n): n is number => n != null));
+  const energy = mean(reads.map(r => r.energy).filter((n): n is number => n != null));
+  const detachedFully = reads.filter(r => r.detached === 3).length;
+  const parts: string[] = [];
+  if (sleep != null) parts.push(`sleep ${sleep.toFixed(1)}/5`);
+  if (energy != null) parts.push(`energy ${energy.toFixed(1)}/5`);
+  parts.push(`switched off fully ${detachedFully} of ${reads.length} days`);
+  return parts.join(", ");
+}
 
 export function SettingsDialog({ settings, onSave, onClose }: {
   settings: AppSettings;
@@ -184,6 +198,22 @@ export function buildReportText(profile: import("../hooks/use-client-profile").C
     if (anchor.recoveryAnchor) { lines.push("Recovery anchor:"); lines.push(anchor.recoveryAnchor); lines.push(""); }
   }
 
+  const measure = latestMeasure(profile);
+  const lowAreas = lowWorklifeAreas(profile);
+  const reads = recentReads(profile, cutoff.toISOString());
+  if (measure || lowAreas.length > 0 || reads.length > 0) {
+    lines.push("---");
+    lines.push("");
+    lines.push("MEASURES");
+    lines.push("");
+    if (measure) {
+      lines.push(`Exhaustion (CBI personal burnout): ${measure.score}/100, ${cbiBand(measure.score).toLowerCase()} — taken ${new Date(measure.date + "T00:00:00").toLocaleDateString(LOCALE, { day: "numeric", month: "long" })}`);
+    }
+    if (lowAreas.length > 0) lines.push(`Areas of strain: ${lowAreas.join(", ")}`);
+    if (reads.length > 0) lines.push(`Daily reads (${reads.length}): ${readsSummary(reads)}`);
+    lines.push("");
+  }
+
   if (recentLogs.length > 0) {
     lines.push("---");
     lines.push("");
@@ -191,6 +221,7 @@ export function buildReportText(profile: import("../hooks/use-client-profile").C
     lines.push("");
     for (const log of recentLogs) {
       lines.push(new Date(log.date).toLocaleDateString(LOCALE, { weekday: "long", day: "numeric", month: "long" }));
+      if (log.intensity != null) lines.push(`Weight: ${log.intensity}/10`);
       if (log.wherePressureShowedUp) lines.push(`Where pressure showed up: ${log.wherePressureShowedUp}`);
       if (log.moment) lines.push(`The moment: ${log.moment}`);
       if (log.whatDidYouDoNext) lines.push(`What I did next: ${log.whatDidYouDoNext}`);
@@ -233,6 +264,8 @@ export function buildReportText(profile: import("../hooks/use-client-profile").C
 export function PreSessionModal({ coachEmail, coachName, onClose }: { coachEmail: string; coachName: string; onClose: () => void }) {
   const { profile } = useClientProfile();
   const [copied, setCopied] = useState(false);
+  const [emailOpened, setEmailOpened] = useState(false);
+  const [sent, setSent] = useState(false);
   if (!profile) return null;
 
   const clientName = profile.intake.name || "Client";
@@ -252,13 +285,23 @@ export function PreSessionModal({ coachEmail, coachName, onClose }: { coachEmail
   const recentResets = profile.weeklyResets.filter(r => new Date(r.weekOf) >= cutoff);
   const prep = profile.nextSessionPrep;
   const anchor = profile.sessionAnchor;
+  const measure = latestMeasure(profile);
+  const lowAreas = lowWorklifeAreas(profile);
+  const reads = recentReads(profile, cutoff.toISOString());
 
   const reportText = buildReportText(profile);
   const hasContent = anchor.whatWeNamed || anchor.thisWeekFocus || recentLogs.length > 0 || recentResets.length > 0
-    || prep.whatToRaise || prep.whatHasShifted || prep.stillSittingWith || prep.anythingElse;
+    || prep.whatToRaise || prep.whatHasShifted || prep.stillSittingWith || prep.anythingElse
+    || !!measure || lowAreas.length > 0 || reads.length > 0;
 
   const coachFirstName = coachName?.trim().split(/\s+/)[0] || "your coach";
   const canShare = typeof navigator !== "undefined" && typeof navigator.share === "function";
+
+  // mailto bodies get silently truncated by many mail clients around 2,000
+  // characters, so a full fortnight of logs won't survive the link. Above this
+  // limit the notes ride on the clipboard and the client pastes them in.
+  const MAILTO_BODY_LIMIT = 1500;
+  const longReport = reportText.length >= MAILTO_BODY_LIMIT;
 
   const handleCopy = async () => {
     try {
@@ -268,28 +311,29 @@ export function PreSessionModal({ coachEmail, coachName, onClose }: { coachEmail
     } catch { /* clipboard not available */ }
   };
 
+  // navigator.share resolves on a completed share and rejects on cancel, so a
+  // clean resolve is a reliable "it went" signal we can confirm to the client.
   const handleShare = async () => {
     try {
       await navigator.share({
         title: `Pre-session notes: ${clientName}`,
         text: reportText,
       });
+      setSent(true);
     } catch { /* user closed the share sheet */ }
   };
 
-  // mailto links get silently truncated by many mail clients around
-  // 2,000 characters. Long reports go via the clipboard instead.
-  const MAILTO_BODY_LIMIT = 1500;
+  // One reliable path: always copy the full notes to the clipboard first, then
+  // open a mail draft already addressed to the coach. Nothing depends on the
+  // mail client keeping a long body, and the client gets a clear next step.
   const handleEmail = async () => {
+    try { await navigator.clipboard.writeText(reportText); setCopied(true); } catch { /* clipboard not available */ }
     const subject = encodeURIComponent(`Pre-session notes: ${clientName}, ${sessionDateDisplay}`);
-    let bodyText: string;
-    if (reportText.length < MAILTO_BODY_LIMIT) {
-      bodyText = reportText;
-    } else {
-      try { await navigator.clipboard.writeText(reportText); } catch { /* clipboard not available */ }
-      bodyText = `Pre-session notes for ${sessionDateDisplay}.\n\nThe full notes were too long for an email link, so they are on the clipboard. Press and hold below this line, then choose Paste.\n\n`;
-    }
+    const bodyText = longReport
+      ? `Pre-session notes for ${sessionDateDisplay}.\n\nYour notes are on the clipboard. Tap in the message, paste them in (press and hold, then Paste), and send.\n\n`
+      : reportText;
     window.location.href = `mailto:${coachEmail}?subject=${subject}&body=${encodeURIComponent(bodyText)}`;
+    setEmailOpened(true);
   };
 
   return (
@@ -337,6 +381,21 @@ export function PreSessionModal({ coachEmail, coachName, onClose }: { coachEmail
                   </div>
                 )}
 
+                {(measure || lowAreas.length > 0 || reads.length > 0) && (
+                  <div className="space-y-3 pt-6 border-t border-border">
+                    <p className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground">Measures</p>
+                    {measure && (
+                      <p className="text-sm">Exhaustion {measure.score}/100 <span className="text-muted-foreground">({cbiBand(measure.score).toLowerCase()})</span></p>
+                    )}
+                    {lowAreas.length > 0 && (
+                      <p className="text-sm">Areas of strain: <span className="text-muted-foreground">{lowAreas.join(", ")}</span></p>
+                    )}
+                    {reads.length > 0 && (
+                      <p className="text-sm">{reads.length} daily {reads.length === 1 ? "read" : "reads"} this cycle</p>
+                    )}
+                  </div>
+                )}
+
                 {recentLogs.length > 0 && (
                   <div className="space-y-6 pt-6 border-t border-border">
                     <p className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
@@ -344,9 +403,14 @@ export function PreSessionModal({ coachEmail, coachName, onClose }: { coachEmail
                     </p>
                     {recentLogs.map(log => (
                       <div key={log.id} className="space-y-2 bg-card p-4 border border-card-border">
-                        <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
-                          {new Date(log.date).toLocaleDateString(LOCALE, { weekday: "long", day: "numeric", month: "long" })}
-                        </p>
+                        <div className="flex items-baseline justify-between gap-3">
+                          <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+                            {new Date(log.date).toLocaleDateString(LOCALE, { weekday: "long", day: "numeric", month: "long" })}
+                          </p>
+                          {log.intensity != null && (
+                            <span className="text-[10px] uppercase tracking-[0.18em] text-primary">{log.intensity}/10</span>
+                          )}
+                        </div>
                         {log.moment && <p className="text-base">{log.moment}</p>}
                         {log.whatHelped && <p className="text-sm text-muted-foreground">{log.whatHelped}</p>}
                       </div>
@@ -402,36 +466,77 @@ export function PreSessionModal({ coachEmail, coachName, onClose }: { coachEmail
             )}
           </div>
 
-          <div className="p-8 border-t border-border flex flex-wrap items-center gap-4">
-            {canShare && (
+          <div className="p-8 border-t border-border space-y-5">
+            {sent ? (
+              <div className="space-y-3">
+                <p className="font-serif italic text-xl text-foreground/90">
+                  Sent. {coachFirstName} has what she needs before you meet.
+                </p>
+                <button
+                  onClick={onClose}
+                  className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground hover:text-foreground transition-colors py-2"
+                >
+                  Close
+                </button>
+              </div>
+            ) : !hasContent ? (
               <button
-                onClick={handleShare}
-                className="flex-1 min-w-[160px] px-6 py-3 bg-primary text-primary-foreground text-sm uppercase tracking-[0.18em] hover:opacity-90"
+                onClick={onClose}
+                className="px-6 py-3 border border-border text-sm uppercase tracking-[0.18em] text-foreground hover:border-foreground/30 transition-colors"
               >
-                Share with {coachFirstName}
+                Close
               </button>
+            ) : (
+              <>
+                <button
+                  onClick={handleEmail}
+                  disabled={!coachEmail}
+                  className="w-full px-6 py-4 bg-primary text-primary-foreground text-sm uppercase tracking-[0.18em] hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  Email to {coachFirstName}
+                </button>
+
+                {emailOpened && (
+                  <div className="bg-card border border-card-border px-5 py-4 space-y-3">
+                    <p className="text-sm text-foreground/80 leading-relaxed">
+                      {longReport
+                        ? "Your notes are copied. In the email that just opened, tap the message, paste them in, and send."
+                        : "Your email is ready in your mail app. Check it opened, then press send."}
+                    </p>
+                    <button
+                      onClick={() => setSent(true)}
+                      className="text-[11px] uppercase tracking-[0.18em] text-primary hover:opacity-80 transition-opacity py-2"
+                    >
+                      I've sent it
+                    </button>
+                  </div>
+                )}
+
+                <div className="flex flex-wrap items-center gap-x-6 gap-y-1 pt-1">
+                  {canShare && (
+                    <button
+                      onClick={handleShare}
+                      className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground hover:text-foreground transition-colors py-2"
+                    >
+                      Share another way
+                    </button>
+                  )}
+                  <button
+                    onClick={handleCopy}
+                    className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground hover:text-foreground transition-colors py-2"
+                  >
+                    {copied ? "Copied" : "Copy the notes"}
+                  </button>
+                </div>
+
+                {!coachEmail && (
+                  <p className="text-xs text-muted-foreground/60">
+                    Coach email not set. Use Share or Copy, or ask your coach to add it in settings.
+                  </p>
+                )}
+              </>
             )}
-            <button
-              onClick={handleCopy}
-              className="flex-1 min-w-[160px] px-6 py-3 border border-border text-sm uppercase tracking-[0.18em] text-foreground hover:border-foreground/30 transition-colors"
-            >
-              {copied ? "Copied" : "Copy to clipboard"}
-            </button>
-            <button
-              onClick={handleEmail}
-              disabled={!coachEmail}
-              className={`flex-1 min-w-[160px] px-6 py-3 text-sm uppercase tracking-[0.18em] disabled:opacity-40 disabled:cursor-not-allowed ${
-                canShare
-                  ? "border border-border text-foreground hover:border-foreground/30 transition-colors"
-                  : "bg-primary text-primary-foreground hover:opacity-90"
-              }`}
-            >
-              Open email draft
-            </button>
           </div>
-          {!coachEmail && (
-            <p className="px-8 pb-6 text-xs text-muted-foreground/60">Coach email not set. Ask your coach to update the app settings.</p>
-          )}
       </DialogContent>
     </Dialog>
   );

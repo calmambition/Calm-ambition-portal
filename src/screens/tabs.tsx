@@ -1,8 +1,51 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useClientProfile } from "../hooks/use-client-profile";
+import { useDraft } from "../hooks/use-draft";
+import { DailyReadCard } from "./measures";
 import { LOCALE } from "../config";
 import { Textarea } from "@/components/ui/textarea";
+
+// Optional 0–10 read on how heavy a moment felt. One tap, skippable, calm.
+// Anchors keep the numbers meaningful without turning it into a form.
+function IntensityScale({ value, onChange }: { value: number | null | undefined; onChange: (v: number | null) => void }) {
+  return (
+    <div className="space-y-3">
+      <div className="flex items-baseline justify-between">
+        <label className="block text-foreground text-sm uppercase tracking-[0.18em]">How heavy did it feel?</label>
+        {(value ?? null) !== null && (
+          <button
+            onClick={() => onChange(null)}
+            className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground/50 hover:text-muted-foreground transition-colors"
+          >
+            Clear
+          </button>
+        )}
+      </div>
+      <div className="grid grid-cols-11 gap-1">
+        {Array.from({ length: 11 }, (_, n) => (
+          <button
+            key={n}
+            onClick={() => onChange(n)}
+            aria-label={`${n} out of 10`}
+            aria-pressed={value === n}
+            className={`h-10 flex items-center justify-center text-sm border transition-colors ${
+              value === n
+                ? "bg-primary text-primary-foreground border-primary"
+                : "border-border text-foreground/60 hover:border-foreground/30"
+            }`}
+          >
+            {n}
+          </button>
+        ))}
+      </div>
+      <div className="flex justify-between text-[10px] uppercase tracking-[0.18em] text-muted-foreground/50">
+        <span>Barely there</span>
+        <span>Overwhelming</span>
+      </div>
+    </div>
+  );
+}
 
 export function IntakeTab({ onNext, onSkip }: { onNext: () => void, onSkip: () => void }) {
   const { profile, updateProfile } = useClientProfile();
@@ -229,6 +272,7 @@ export function SessionTab({ onNext, onArchived, isCoachMode }: { onNext: () => 
 type LogEntry = {
   id: string;
   date: string;
+  intensity?: number | null;
   wherePressureShowedUp: string;
   moment: string;
   whatDidYouDoNext: string;
@@ -236,7 +280,7 @@ type LogEntry = {
   whatMadeItWorse: string;
 };
 
-const LOG_FIELDS: { key: keyof Omit<LogEntry, "id" | "date">; label: string }[] = [
+const LOG_FIELDS: { key: Exclude<keyof Omit<LogEntry, "id" | "date">, "intensity">; label: string }[] = [
   { key: "wherePressureShowedUp", label: "Where did pressure show up?" },
   { key: "moment", label: "What was the moment?" },
   { key: "whatDidYouDoNext", label: "What did you do next?" },
@@ -267,9 +311,14 @@ export function LogEntryCard({ log, onSave, onDelete }: {
     <div className="bg-card border border-card-border">
       <div className="p-6 space-y-4">
         <div className="flex items-center justify-between border-b border-border pb-4">
-          <p className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
-            {new Date(log.date).toLocaleDateString(LOCALE,{ weekday: "long", month: "long", day: "numeric" })}
-          </p>
+          <div className="flex items-baseline gap-3">
+            <p className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
+              {new Date(log.date).toLocaleDateString(LOCALE,{ weekday: "long", month: "long", day: "numeric" })}
+            </p>
+            {(draft.intensity ?? null) !== null && (
+              <span className="text-[10px] uppercase tracking-[0.18em] text-primary">{draft.intensity}/10</span>
+            )}
+          </div>
           <div className="flex items-center gap-3">
             {!editing && !confirmDelete && (
               <>
@@ -299,6 +348,7 @@ export function LogEntryCard({ log, onSave, onDelete }: {
 
         {editing ? (
           <div className="space-y-8 pt-2">
+            <IntensityScale value={draft.intensity} onChange={v => setDraft(prev => ({ ...prev, intensity: v }))} />
             {LOG_FIELDS.map(({ key, label }) => (
               <div key={key} className="space-y-3">
                 <label className="block text-foreground text-sm uppercase tracking-[0.18em]">{label}</label>
@@ -330,16 +380,22 @@ export function LogEntryCard({ log, onSave, onDelete }: {
 }
 
 export function DailyTab({ onNext }: { onNext: () => void }) {
-  const { profile, updateProfile } = useClientProfile();
+  const { profile, updateProfile, activeClientId } = useClientProfile();
   const todayStr = () => new Date().toISOString().slice(0, 10);
-  const [form, setForm] = useState({
-    wherePressureShowedUp: "",
-    moment: "",
-    whatDidYouDoNext: "",
-    whatHelped: "",
-    whatMadeItWorse: "",
-    logDate: todayStr(),
-  });
+  // The draft persists on every keystroke so a half-written moment survives a
+  // backgrounded tab or a reload. It clears only once the moment is logged.
+  const { value: form, setValue: setForm, clear: clearForm } = useDraft(
+    activeClientId ? `daily-${activeClientId}` : null,
+    {
+      wherePressureShowedUp: "",
+      moment: "",
+      whatDidYouDoNext: "",
+      whatHelped: "",
+      whatMadeItWorse: "",
+      intensity: null as number | null,
+      logDate: todayStr(),
+    }
+  );
   const [showDetail, setShowDetail] = useState(false);
   const [justLogged, setJustLogged] = useState(false);
 
@@ -353,14 +409,7 @@ export function DailyTab({ onNext }: { onNext: () => void }) {
       ...prev,
       logs: [{ id: Date.now().toString(), date, ...fields }, ...prev.logs]
     }));
-    setForm({
-      wherePressureShowedUp: "",
-      moment: "",
-      whatDidYouDoNext: "",
-      whatHelped: "",
-      whatMadeItWorse: "",
-      logDate: todayStr(),
-    });
+    clearForm();
     setShowDetail(false);
     setJustLogged(true);
     setTimeout(() => setJustLogged(false), 2500);
@@ -408,6 +457,8 @@ export function DailyTab({ onNext }: { onNext: () => void }) {
         </div>
       )}
 
+      <DailyReadCard />
+
       <div className="space-y-8">
         <h2 className="text-3xl font-serif">Log a moment</h2>
 
@@ -422,6 +473,8 @@ export function DailyTab({ onNext }: { onNext: () => void }) {
             className="w-full bg-transparent border-0 border-b border-border rounded-none focus-visible:ring-0 focus-visible:border-primary px-0 py-2 resize-none min-h-[96px] text-lg text-foreground/90 placeholder:text-muted-foreground/30 placeholder:italic"
           />
         </div>
+
+        <IntensityScale value={form.intensity} onChange={v => setForm(prev => ({ ...prev, intensity: v }))} />
 
         {!showDetail ? (
           <button
@@ -441,7 +494,7 @@ export function DailyTab({ onNext }: { onNext: () => void }) {
               <div key={key} className="space-y-4">
                 <label className="block text-foreground text-sm uppercase tracking-[0.18em]">{label}</label>
                 <Textarea
-                  value={form[key as keyof typeof form]}
+                  value={form[key as keyof typeof form] as string}
                   onChange={(e) => setForm(prev => ({ ...prev, [key]: e.target.value }))}
                   className="w-full bg-transparent border-0 border-b border-border rounded-none focus-visible:ring-0 focus-visible:border-primary px-0 py-2 resize-none min-h-[60px] text-lg text-foreground/90"
                 />
@@ -502,36 +555,6 @@ export function DailyTab({ onNext }: { onNext: () => void }) {
         )}
       </div>
 
-      <div className="space-y-10 pt-12 border-t border-border">
-        <div className="space-y-2">
-          <h2 className="text-3xl font-serif">Before the next session</h2>
-          <p className="text-sm text-muted-foreground">
-            Reflections to bring into your next appointment. Your coach will read these before you meet.
-          </p>
-        </div>
-
-        {[
-          { field: "whatToRaise" as const, label: "What do you want to raise?" },
-          { field: "whatHasShifted" as const, label: "What's been different this week?" },
-          { field: "stillSittingWith" as const, label: "What's still on your mind?" },
-          { field: "anythingElse" as const, label: "Anything else you want me to know before we meet?" },
-        ].map(({ field, label }) => (
-          <div key={field} className="space-y-4">
-            <label className="block text-foreground text-sm uppercase tracking-[0.18em]">{label}</label>
-            <Textarea
-              value={profile.nextSessionPrep[field]}
-              onChange={e =>
-                updateProfile(prev => ({
-                  ...prev,
-                  nextSessionPrep: { ...prev.nextSessionPrep, [field]: e.target.value },
-                }))
-              }
-              className="w-full bg-transparent border-0 border-b border-border rounded-none focus-visible:ring-0 focus-visible:border-primary px-0 py-2 resize-none min-h-[80px] text-lg text-foreground/90"
-            />
-          </div>
-        ))}
-      </div>
-
       <div className="fixed bottom-0 left-0 right-0 p-4 bg-background/90 backdrop-blur border-t border-border flex justify-end md:static md:bg-transparent md:border-0 md:p-0 mt-16">
         <button onClick={onNext} className="px-8 py-3 bg-primary text-primary-foreground text-sm uppercase tracking-[0.18em] hover:opacity-90">Review pattern</button>
       </div>
@@ -539,15 +562,60 @@ export function DailyTab({ onNext }: { onNext: () => void }) {
   );
 }
 
-export function WeeklyTab({ onNext }: { onNext: () => void }) {
+// Session prep lives on its own surface now, so the daily log stays a place
+// for fast capture rather than an expanding homework sheet.
+export function PrepTab({ onNext }: { onNext: () => void }) {
   const { profile, updateProfile } = useClientProfile();
-  const [form, setForm] = useState({
-    keptShowingUp: "",
-    feltDifferent: "",
-    worked: "",
-    didNotHold: "",
-    nextWeekChange: ""
-  });
+  if (!profile) return null;
+  return (
+    <div className="space-y-16">
+      <div className="space-y-2">
+        <h2 className="text-4xl font-serif">Before we meet</h2>
+        <p className="text-sm text-muted-foreground">
+          Reflections to bring into your next appointment. Your coach reads these before you meet.
+        </p>
+      </div>
+
+      {[
+        { field: "whatToRaise" as const, label: "What do you want to raise?" },
+        { field: "whatHasShifted" as const, label: "What's been different this week?" },
+        { field: "stillSittingWith" as const, label: "What's still on your mind?" },
+        { field: "anythingElse" as const, label: "Anything else you want me to know before we meet?" },
+      ].map(({ field, label }) => (
+        <div key={field} className="space-y-4">
+          <label className="block text-foreground text-sm uppercase tracking-[0.18em]">{label}</label>
+          <Textarea
+            value={profile.nextSessionPrep[field]}
+            onChange={e =>
+              updateProfile(prev => ({
+                ...prev,
+                nextSessionPrep: { ...prev.nextSessionPrep, [field]: e.target.value },
+              }))
+            }
+            className="w-full bg-transparent border-0 border-b border-border rounded-none focus-visible:ring-0 focus-visible:border-primary px-0 py-2 resize-none min-h-[80px] text-lg text-foreground/90"
+          />
+        </div>
+      ))}
+
+      <div className="fixed bottom-0 left-0 right-0 p-4 bg-background/90 backdrop-blur border-t border-border flex justify-end md:static md:bg-transparent md:border-0 md:p-0 mt-16">
+        <button onClick={onNext} className="px-8 py-3 bg-primary text-primary-foreground text-sm uppercase tracking-[0.18em] hover:opacity-90">Done</button>
+      </div>
+    </div>
+  );
+}
+
+export function WeeklyTab({ onNext }: { onNext: () => void }) {
+  const { profile, updateProfile, activeClientId } = useClientProfile();
+  const { value: form, setValue: setForm, clear: clearForm } = useDraft(
+    activeClientId ? `weekly-${activeClientId}` : null,
+    {
+      keptShowingUp: "",
+      feltDifferent: "",
+      worked: "",
+      didNotHold: "",
+      nextWeekChange: ""
+    }
+  );
 
   if (!profile) return null;
 
@@ -556,13 +624,7 @@ export function WeeklyTab({ onNext }: { onNext: () => void }) {
       ...prev,
       weeklyResets: [{ id: Date.now().toString(), weekOf: new Date().toISOString(), ...form }, ...prev.weeklyResets]
     }));
-    setForm({
-      keptShowingUp: "",
-      feltDifferent: "",
-      worked: "",
-      didNotHold: "",
-      nextWeekChange: ""
-    });
+    clearForm();
   };
 
   return (
@@ -936,8 +998,13 @@ export function SessionHistoryTab({ onNext }: { onNext: () => void }) {
 }
 
 export function CheckInsTab({ onNext }: { onNext: () => void }) {
-  const { profile, updateProfile } = useClientProfile();
-  const [note, setNote] = useState("");
+  const { profile, updateProfile, activeClientId } = useClientProfile();
+  const { value: draft, setValue: setDraft, clear: clearDraft } = useDraft(
+    activeClientId ? `checkin-${activeClientId}` : null,
+    { text: "" }
+  );
+  const note = draft.text;
+  const setNote = (v: string) => setDraft({ text: v });
 
   if (!profile) return null;
 
@@ -951,7 +1018,7 @@ export function CheckInsTab({ onNext }: { onNext: () => void }) {
         ...prev.coachCheckIns,
       ],
     }));
-    setNote("");
+    clearDraft();
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {

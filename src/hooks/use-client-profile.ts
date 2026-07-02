@@ -40,6 +40,10 @@ export interface ClientProfile {
   logs: Array<{
     id: string;
     date: string;
+    // Optional 0–10 read on how heavy the moment felt. Gives the coach a
+    // trend line to triage against, instead of prose alone. Older logs and
+    // skipped ratings are undefined.
+    intensity?: number | null;
     wherePressureShowedUp: string;
     moment: string;
     whatDidYouDoNext: string;
@@ -85,6 +89,33 @@ export interface ClientProfile {
     anythingElse: string;
   };
   supervisionNotes: string;
+  // A once-daily read: last night's sleep, today's energy, and whether the
+  // client switched off after work. Feeds the sleep/recovery signal the
+  // methodology needs but the moment log never captured. One entry per day.
+  dailyReads: Array<{
+    date: string;            // YYYY-MM-DD
+    sleep: number | null;    // 1–5, last night
+    energy: number | null;   // 1–5, today
+    detached: number | null; // 1–3, switched off after work (No/Somewhat/Fully)
+  }>;
+  // Validated burnout baseline, repeated over time so the coach can see a
+  // trajectory. Copenhagen Burnout Inventory, personal-burnout subscale
+  // (free to use; Kristensen et al., 2005).
+  burnoutMeasures: Array<{
+    id: string;
+    date: string;
+    scale: "CBI-PB";
+    responses: number[]; // 0/25/50/75/100 per item
+    score: number;       // 0–100 mean
+  }>;
+  // Areas of Worklife check (informed by Leiter & Maslach): the six domains
+  // whose mismatch drives burnout. One representative statement per domain,
+  // rated 1–5. Low scores tell the coach where to aim.
+  worklifeAreas: Array<{
+    id: string;
+    date: string;
+    responses: { workload: number; control: number; reward: number; community: number; fairness: number; values: number };
+  }>;
   // One-time backup reminder, shown after enough logs accumulate.
   backupNudgeDismissed?: boolean;
   sessionHistory: Array<{
@@ -155,8 +186,35 @@ const defaultProfile: ClientProfile = {
     anythingElse: "",
   },
   supervisionNotes: "",
+  dailyReads: [],
+  burnoutMeasures: [],
+  worklifeAreas: [],
   sessionHistory: [],
 };
+
+// Older profiles in localStorage predate the newer fields. Merge them onto the
+// default shape on load so components can read the new arrays without guarding
+// every access, and so a partial object never crashes a screen.
+function normalizeProfile(p: Partial<ClientProfile> | null | undefined): ClientProfile {
+  const base = p ?? {};
+  return {
+    ...defaultProfile,
+    ...base,
+    intake: { ...defaultProfile.intake, ...base.intake },
+    sessionAnchor: { ...defaultProfile.sessionAnchor, ...base.sessionAnchor },
+    experiment: { ...defaultProfile.experiment, ...base.experiment },
+    direction: { ...defaultProfile.direction, ...base.direction },
+    resetTools: { ...defaultProfile.resetTools, ...base.resetTools },
+    nextSessionPrep: { ...defaultProfile.nextSessionPrep, ...base.nextSessionPrep },
+    logs: base.logs ?? [],
+    weeklyResets: base.weeklyResets ?? [],
+    coachCheckIns: base.coachCheckIns ?? [],
+    dailyReads: base.dailyReads ?? [],
+    burnoutMeasures: base.burnoutMeasures ?? [],
+    worklifeAreas: base.worklifeAreas ?? [],
+    sessionHistory: base.sessionHistory ?? [],
+  };
+}
 
 const demoProfiles: Record<string, ClientProfile> = {
   alex: {
@@ -189,6 +247,7 @@ const demoProfiles: Record<string, ClientProfile> = {
       {
         id: "1",
         date: new Date(Date.now() - 86400000).toISOString(),
+        intensity: 7,
         wherePressureShowedUp: "Back to back meetings all morning.",
         moment: "Realised I hadn't taken a drink of water in 4 hours.",
         whatDidYouDoNext: "Pushed through the last call.",
@@ -229,6 +288,17 @@ const demoProfiles: Record<string, ClientProfile> = {
       anythingElse: "",
     },
     supervisionNotes: "Alex presents as highly functional under significant chronic load. The composure in session one was notable — worth exploring whether that presentation is itself part of the pattern. Key supervisory question: is the work surfacing what is underneath the performance, or reinforcing the management of it? Watch for over-reliance on cognitive reframes as a substitute for behavioural change. The car anchor is promising but may need revisiting if the structural conditions at work do not shift.",
+    dailyReads: [
+      { date: new Date(Date.now() - 2 * 86400000).toISOString().slice(0, 10), sleep: 2, energy: 2, detached: 1 },
+      { date: new Date(Date.now() - 86400000).toISOString().slice(0, 10), sleep: 3, energy: 3, detached: 2 },
+    ],
+    burnoutMeasures: [
+      { id: "m1", date: new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 10), scale: "CBI-PB", responses: [75, 75, 100, 50, 75, 50], score: 71 },
+      { id: "m2", date: new Date(Date.now() - 3 * 86400000).toISOString().slice(0, 10), scale: "CBI-PB", responses: [75, 50, 75, 25, 50, 50], score: 54 },
+    ],
+    worklifeAreas: [
+      { id: "w1", date: new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 10), responses: { workload: 2, control: 2, reward: 4, community: 4, fairness: 3, values: 4 } },
+    ],
     sessionHistory: [
       {
         id: "sh1",
@@ -301,6 +371,9 @@ const demoProfiles: Record<string, ClientProfile> = {
       anythingElse: "",
     },
     supervisionNotes: "Sam's question in week two — 'what am I switching away from?' — is the most clinically interesting moment so far. The always-on state may be serving an avoidance function that has not yet been named. Pacing is important here: intellectualisation is a defence, not resistance. The work is to stay with the behavioural level long enough for the underlying material to surface without being named prematurely.",
+    dailyReads: [],
+    burnoutMeasures: [],
+    worklifeAreas: [],
     sessionHistory: [
       {
         id: "sh1",
@@ -361,6 +434,9 @@ const demoProfiles: Record<string, ClientProfile> = {
       anythingElse: "",
     },
     supervisionNotes: "The compliance pattern is the central supervisory concern with Maya. High insight, strong verbal engagement, consistent follow-through — and yet the pattern keeps reasserting. Consider whether the coaching relationship itself may be functioning as another performance context. The discomfort Maya reported ('it felt strange to call something that small enough') is exactly the right territory. Hold the constraint. Do not expand the work prematurely.",
+    dailyReads: [],
+    burnoutMeasures: [],
+    worklifeAreas: [],
     sessionHistory: [
       {
         id: "sh1",
@@ -408,7 +484,7 @@ export function useClientProfile() {
       const clientsRaw = localStorage.getItem(CLIENTS_KEY);
 
       if (legacyRaw && !clientsRaw) {
-        const legacyProfile = JSON.parse(legacyRaw) as ClientProfile;
+        const legacyProfile = normalizeProfile(JSON.parse(legacyRaw));
         const id = "client-" + Date.now();
         const entry: ClientEntry = {
           id,
@@ -420,7 +496,7 @@ export function useClientProfile() {
         const list = [entry];
         localStorage.setItem(CLIENTS_KEY, JSON.stringify(list));
         localStorage.setItem(ACTIVE_KEY, id);
-        localStorage.setItem(profileKey(id), legacyRaw);
+        localStorage.setItem(profileKey(id), JSON.stringify(legacyProfile));
         localStorage.removeItem(LEGACY_KEY);
         setClients(list);
         clientsRef.current = list;
@@ -440,7 +516,7 @@ export function useClientProfile() {
         const profileRaw = localStorage.getItem(profileKey(activeId));
         setActiveClientId(activeId);
         activeIdRef.current = activeId;
-        setProfileState(profileRaw ? JSON.parse(profileRaw) : null);
+        setProfileState(profileRaw ? normalizeProfile(JSON.parse(profileRaw)) : null);
       }
     } catch (e) {
       console.error("Failed to load clients", e);
@@ -481,7 +557,7 @@ export function useClientProfile() {
     localStorage.setItem(ACTIVE_KEY, clientId);
     setActiveClientId(clientId);
     activeIdRef.current = clientId;
-    setProfileState(profileRaw ? JSON.parse(profileRaw) : null);
+    setProfileState(profileRaw ? normalizeProfile(JSON.parse(profileRaw)) : null);
   }, []);
 
   const createClient = useCallback((name = "", role = "", extraIntake: Partial<ClientProfile["intake"]> = {}) => {

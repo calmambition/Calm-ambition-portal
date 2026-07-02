@@ -1,4 +1,6 @@
 <svg width="180" height="180" viewBox="0 0 180 180" fill="none" xmlns="http://www.w3.org/2000/svg">
-<rect width="180" height="180" fill="#1E2820"/>
-<text x="90" y="120" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="84" fill="#F5F0E8">CA</text>
+  <rect width="180" height="180" fill="#1E2820"/>
+  <rect x="63" y="52" width="54" height="1.6" fill="#A98E5F"/>
+  <rect x="63" y="126" width="54" height="1.6" fill="#A98E5F"/>
+  <text x="90" y="104" text-anchor="middle" font-family="'Cormorant Garamond', Georgia, 'Times New Roman', serif" font-weight="500" font-size="46" letter-spacing="4" fill="#F5F0E8">CA</text>
 </svg>
