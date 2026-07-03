@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import type { ClientSetupPayload } from '../lib/clientSetup';
 
 export interface ClientEntry {
   id: string;
@@ -6,6 +7,9 @@ export interface ClientEntry {
   role: string;
   createdAt: string;
   isDemo?: boolean;
+  // Set when the client was seeded from a coach setup link. Used to dedupe so
+  // reopening the same link switches to the client instead of duplicating them.
+  setupId?: string;
 }
 
 export interface ClientProfile {
@@ -582,6 +586,41 @@ export function useClientProfile() {
     return id;
   }, []);
 
+  // Seed a client from a coach setup link. Reopening the same link switches to
+  // the existing client rather than creating a duplicate or overwriting work.
+  const importSetup = useCallback((payload: ClientSetupPayload): string => {
+    const existing = clientsRef.current.find(c => c.setupId === payload.setupId);
+    if (existing) {
+      const raw = localStorage.getItem(profileKey(existing.id));
+      localStorage.setItem(ACTIVE_KEY, existing.id);
+      setActiveClientId(existing.id);
+      activeIdRef.current = existing.id;
+      setProfileState(raw ? normalizeProfile(JSON.parse(raw)) : null);
+      return existing.id;
+    }
+    const id = "client-" + Date.now();
+    const entry: ClientEntry = {
+      id,
+      name: payload.name || "New client",
+      role: payload.role || "",
+      createdAt: new Date().toISOString(),
+      setupId: payload.setupId,
+    };
+    const seeded = normalizeProfile({
+      ...defaultProfile,
+      intake: { ...defaultProfile.intake, ...payload.intake, name: payload.name || "", currentRole: payload.role || "" },
+      sessionAnchor: { ...defaultProfile.sessionAnchor, ...payload.sessionAnchor },
+    });
+    const updatedClients = [...clientsRef.current, entry];
+    persistClients(updatedClients);
+    localStorage.setItem(ACTIVE_KEY, id);
+    localStorage.setItem(profileKey(id), JSON.stringify(seeded));
+    setActiveClientId(id);
+    activeIdRef.current = id;
+    setProfileState(seeded);
+    return id;
+  }, []);
+
   const loadDemo = useCallback((demoKey: "alex" | "sam" | "maya") => {
     const demoData = demoProfiles[demoKey];
     const demoId = `demo-${demoKey}`;
@@ -741,6 +780,7 @@ export function useClientProfile() {
     activeClientId,
     switchClient,
     createClient,
+    importSetup,
     renameClient,
     removeClient,
     exportAllData,

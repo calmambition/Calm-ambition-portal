@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useClientProfile } from "../hooks/use-client-profile";
 import { useDraft } from "../hooks/use-draft";
 import { DailyReadCard } from "./measures";
+import { buildSetupPayload, buildSetupUrl } from "../lib/clientSetup";
 import { LOCALE } from "../config";
 import { Textarea } from "@/components/ui/textarea";
 
@@ -105,7 +106,16 @@ export function IntakeTab({ onNext, onSkip }: { onNext: () => void, onSkip: () =
 export function SessionTab({ onNext, onArchived, isCoachMode }: { onNext: () => void; onArchived: () => void; isCoachMode: boolean }) {
   const { profile, updateProfile, archiveSession } = useClientProfile();
   const [archiveConfirm, setArchiveConfirm] = useState(false);
+  const [setupCopied, setSetupCopied] = useState(false);
   if (!profile) return null;
+
+  const handleCopySetup = async () => {
+    try {
+      await navigator.clipboard.writeText(buildSetupUrl(buildSetupPayload(profile)));
+      setSetupCopied(true);
+      setTimeout(() => setSetupCopied(false), 2400);
+    } catch { /* clipboard unavailable */ }
+  };
 
   const handleChange = (field: keyof typeof profile.sessionAnchor, value: string) => {
     updateProfile(prev => ({
@@ -230,6 +240,23 @@ export function SessionTab({ onNext, onArchived, isCoachMode }: { onNext: () => 
               placeholder="Observations, patterns noticed, things to return to..."
               className="w-full bg-card border border-border rounded-none focus-visible:ring-0 focus-visible:border-primary px-4 py-3 resize-none min-h-[140px] text-base text-foreground/90 placeholder:text-muted-foreground/40 placeholder:italic"
             />
+          </div>
+
+          <div className="pt-8 border-t border-border space-y-3">
+            <div className="flex items-baseline justify-between">
+              <label className="block text-foreground text-sm uppercase tracking-[0.18em]">Client setup link</label>
+              <span className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground/60">One-time. Seeds their portal.</span>
+            </div>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              Send this after your first session. When the client opens it once, their portal fills with their details and this anchor, no login needed. It carries session content, so share it privately.
+            </p>
+            <button
+              onClick={handleCopySetup}
+              data-testid="button-copy-setup-link"
+              className="px-6 py-2.5 text-sm uppercase tracking-[0.18em] border border-border text-foreground hover:border-foreground/30 transition-colors"
+            >
+              {setupCopied ? "Copied" : "Copy setup link"}
+            </button>
           </div>
 
           <div className="pt-8 border-t border-border space-y-3">
