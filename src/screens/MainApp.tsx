@@ -28,6 +28,7 @@ import {
   PrepTab,
 } from "./tabs";
 import { MeasuresTab } from "./measures";
+import { ClientReflectionEngine } from "../components/ClientReflectionEngine";
 
 export function MainApp({ onNewClient, isCoachMode, coachName, coachEmail, safetyNote, onExitCoachMode, onOpenSettings, onCoachAccess, initialTab = "home" }: { onNewClient: () => void; isCoachMode: boolean; coachName: string; coachEmail: string; safetyNote?: string; onExitCoachMode: () => void; onOpenSettings: () => void; onCoachAccess: () => void; initialTab?: string }) {
   const { profile, clearProfile, lastSaved, exportAllData, importData } = useClientProfile();
@@ -52,6 +53,7 @@ export function MainApp({ onNewClient, isCoachMode, coachName, coachEmail, safet
     { id: "history", label: "History", coachOnly: true },
     { id: "checkins", label: "Between sessions", coachOnly: true },
     { id: "daily", label: "Daily log" },
+    { id: "reflect", label: "Reflect" },
     { id: "measures", label: "Measures" },
     { id: "prep", label: "Before we meet" },
     { id: "weekly", label: "Weekly reset" },
@@ -64,6 +66,7 @@ export function MainApp({ onNewClient, isCoachMode, coachName, coachEmail, safet
   const clientNav = [
     { id: "home", label: "Home" },
     { id: "daily", label: "Log" },
+    { id: "reflect", label: "Reflect" },
     { id: "lookback", label: "Look back" },
   ];
   const tabs = isCoachMode ? allTabs : clientNav;
@@ -215,6 +218,7 @@ export function MainApp({ onNewClient, isCoachMode, coachName, coachEmail, safet
             {activeTab === "history" && <SessionHistoryTab onNext={() => setActiveTab("checkins")} />}
             {activeTab === "checkins" && <CheckInsTab onNext={() => setActiveTab("daily")} />}
             {activeTab === "daily" && <DailyTab onNext={() => setActiveTab("pattern")} />}
+            {activeTab === "reflect" && <ClientReflectionEngine onDone={() => setActiveTab("home")} />}
             {activeTab === "weekly" && <WeeklyTab onNext={() => setActiveTab("direction")} />}
             {activeTab === "experiment" && <ExperimentTab onNext={() => setActiveTab("pattern")} />}
             {activeTab === "pattern" && <PatternTab onNext={() => setActiveTab("daily")} />}
